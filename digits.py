@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-
 def create_model():
     learning_rate = 0.001
     inputs_ = tf.placeholder(tf.float32, (None, 28, 28, 1), name='inputs')
@@ -77,6 +76,5 @@ def train():
     print("Epoch: {}/{}...".format(e + 1, epochs),
           "Training loss: {:.4f}".format(batch_cost))
 
-
 if __name__ == "__main__":
-    train()
+    mnist()
