@@ -1,12 +1,12 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
 
 
 def create_model():
     learning_rate = 0.001
     inputs_ = tf.placeholder(tf.float32, (None, 28, 28, 1), name='inputs')
     targets_ = tf.placeholder(tf.float32, (None, 28, 28, 1), name='targets')
+
     ### Encoder
     conv1 = tf.layers.conv2d(inputs=inputs_, filters=32, kernel_size=(3,3), padding='same', activation=tf.nn.relu)
     # Now 28x28x32
@@ -20,6 +20,8 @@ def create_model():
     # Now 7x7x16
     encoded = tf.layers.max_pooling2d(conv3, pool_size=(2,2), strides=(2,2), padding='same')
     # Now 4x4x16
+
+
     ### Decoder
     upsample1 = tf.image.resize_images(encoded, size=(7,7), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     # Now 7x7x16
@@ -47,7 +49,9 @@ def create_model():
 
 
 def train():
-    mnist = input_data.read_data_sets('MNIST_data', validation_size=0)
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+    x_train, x_test = x_train / 255.0, x_test / 255.0
+
     inputs_, targets_, cost, opt = create_model()
 
     sess = tf.Session()
@@ -57,7 +61,7 @@ def train():
     noise_factor = 0.5
     sess.run(tf.global_variables_initializer())
     for e in range(epochs):
-        for ii in range(mnist.train.num_examples // batch_size):
+        for ii in range(x_train.shape(0) // batch_size):
             batch = mnist.train.next_batch(batch_size)
             # Get images from the batch
             imgs = batch[0].reshape((-1, 28, 28, 1))
