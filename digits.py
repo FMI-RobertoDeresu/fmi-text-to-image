@@ -1,6 +1,12 @@
 import numpy as np
 import tensorflow as tf
 
+flags = tf.app.flags
+flags.DEFINE_string('data_dir', '/tmp/dat/', 'Directory for data')
+flags.DEFINE_string('logdir', '/tmp/log/', 'Directory for logs')
+
+FLAGS = flags.FLAGS
+
 
 def create_model(features):
     # encoder
@@ -40,46 +46,57 @@ def create_model(features):
 
 
 def train(train_data, test_data, learning_rate=0.001, epochs=100, batch_size=32, noise_factor=0.2):
-    # placeholders
-    batch_size_ = tf.placeholder(tf.int64)
-    features_ = tf.placeholder(tf.float32, shape=[None, 2])
-    labels_ = tf.placeholder(tf.float32, shape=[None, 1])
+    input_shape = [None] + list(train_data.shape)[1:4]
 
-    # datasets
+    print("Create placeholders")
+    batch_size_ = tf.placeholder(tf.int64)
+    features_ = tf.placeholder(tf.float32, shape=input_shape)
+    labels_ = tf.placeholder(tf.float32, shape=input_shape)
+
+    print("Create datasets")
     train_dataset = tf.data.Dataset.from_tensor_slices((features_, labels_)).batch(batch_size_).repeat()
     test_dataset = tf.data.Dataset.from_tensor_slices((features_, labels_)).batch(batch_size_)
 
     iter = tf.data.Iterator.from_structure(train_dataset.output_types, train_dataset.output_shapes)
     features, labels = iter.get_next()
 
-    # create the initialisation operations
+    print("Create iterator init operations")
     train_init_op = iter.make_initializer(train_dataset)
     test_init_op = iter.make_initializer(test_dataset)
 
-    # make model
-    encoded, decoded, logits = create_model()
+    print('Create model')
+    encoded, decoded, logits = create_model(features)
 
     loss = tf.losses.sigmoid_cross_entropy(labels, logits)
     opt = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
-    # add noise to input
+    print(f'Add noise ({noise_factor}) to input')
     noisy_train_data = train_data + noise_factor * np.random.randn(*train_data.shape)
+
+    # Merge all the summaries
+    summary_op = tf.summary.merge_all()
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
+        print(f'Saving summaries to: {FLAGS.logdir}')
+        train_writer = tf.summary.FileWriter(FLAGS.logdir, sess.graph)
+
         sess.run(train_init_op, feed_dict={features_: noisy_train_data, labels_: train_data, batch_size_: batch_size})
         for epoch in range(epochs):
             num_batches = train_data.shape[0] // batch_size
-            loss = 0
+            loss_val = 0
             for _ in range(num_batches):
-                batch_loss, opt_batch = sess.run([loss, opt], feed_dict={features_: noisy_train_data, labels_: train_data})
-                loss += batch_loss
-        print("Epoch: {}/{}...".format(epoch + 1, epochs), "Training loss: {:.4f}".format(loss))
+                loss_batch, opt_batch = sess.run([loss, opt])
+                loss_val += loss_batch
+            print("Epoch: {}/{}...".format(epoch + 1, epochs), "Training loss: {:.4f}".format(loss_val))
 
 
 def mnist():
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-    train(x_train, x_test, epochs=3)
+    (x_train, _), (x_test, _) = tf.keras.datasets.mnist.load_data()
+    x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1)
+    x_test = x_test.reshape(-1, x_test.shape[1], x_test.shape[2], 1)
+    train(x_train[0:1000], x_test, epochs=3, noise_factor=0)
 
 
 if __name__ == "__main__":
