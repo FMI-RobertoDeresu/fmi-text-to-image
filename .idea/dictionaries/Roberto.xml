@@ -10,6 +10,7 @@
       <w>maxpool</w>
       <w>mnist</w>
       <w>upsample</w>
+      <w>vaegan</w>
     </words>
   </dictionary>
 </component>

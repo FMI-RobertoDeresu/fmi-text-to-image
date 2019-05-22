@@ -27,7 +27,7 @@ rnd_index_list = np.random.randint(60000, size=(1000, 3))
 img_pad_with = 9 * (3 - 1)
 
 meta = []
-for index_list in rnd_index_list:
+for i, index_list in enumerate(rnd_index_list):
     images = [np.array(x_train[x], dtype='float') for x in index_list]
     labels = [str(y_train[x]) for x in index_list]
 
@@ -41,7 +41,7 @@ for index_list in rnd_index_list:
     img = img.resize((128, 128), Image.ANTIALIAS)
     img = img.convert("1")
 
-    image_file_name = "img_{}.png".format("_".join(labels))
+    image_file_name = "img_{}_{}.png".format(str((i+1)).rjust(4, "0"), "_".join(labels))
     image_file_path = os.path.join(dataset_path, "imgs", image_file_name)
     pathlib.Path(image_file_path).parent.mkdir(parents=True, exist_ok=True)
     img.save(image_file_path)
@@ -49,7 +49,7 @@ for index_list in rnd_index_list:
     meta.append({
         "image": os.path.join("imgs", image_file_name),
         "label": labels,
-        "captions": label_name
+        "captions": [label_name]
     })
 
 meta_file_path = os.path.join(dataset_path, "meta.json")

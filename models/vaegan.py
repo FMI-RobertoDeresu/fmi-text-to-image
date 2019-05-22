@@ -1,0 +1,2 @@
+class VAEGAN:
+    pass
