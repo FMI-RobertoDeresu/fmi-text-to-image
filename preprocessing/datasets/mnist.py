@@ -6,7 +6,7 @@ import time
 import json
 from PIL import Image
 
-dataset_path = pathlib.Path("../datasets/mnist/{}".format(int(time.time())))
+dataset_path = pathlib.Path("../../datasets/mnist/{}".format(int(time.time())))
 dataset_path.mkdir(parents=True, exist_ok=True)
 
 letter_name = {

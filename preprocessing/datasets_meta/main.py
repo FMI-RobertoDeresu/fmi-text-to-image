@@ -3,7 +3,7 @@ import os
 import pathlib
 import re
 
-datasets_dir_path = pathlib.Path("../datasets")
+datasets_dir_path = pathlib.Path("../../datasets")
 datasets_names = list(os.walk(datasets_dir_path))[0][1]
 datasets_paths = [(x, os.path.join(datasets_dir_path, x)) for x in datasets_names]
 

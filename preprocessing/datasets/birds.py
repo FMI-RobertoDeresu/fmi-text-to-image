@@ -4,8 +4,8 @@ import pathlib
 from PIL import Image
 
 resize = True
-raw_dataset_path = pathlib.Path("../tmp/datasets/birds")
-processed_dataset_path = pathlib.Path("../datasets/cub-200-2011-128x128")
+raw_dataset_path = pathlib.Path("../../tmp/datasets/birds")
+processed_dataset_path = pathlib.Path("../../datasets/cub-200-2011-128x128")
 
 images_dirs_path = os.path.join(raw_dataset_path, "images")
 captions_dirs_path = os.path.join(raw_dataset_path, "captions")

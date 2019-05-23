@@ -6,8 +6,8 @@ import itertools
 from PIL import Image
 
 resize = False
-raw_dataset_path = pathlib.Path("../tmp/datasets/flickr30k")
-processed_dataset_path = pathlib.Path("../datasets/flickr30k-original-size")
+raw_dataset_path = pathlib.Path("../../tmp/datasets/flickr30k")
+processed_dataset_path = pathlib.Path("../../datasets/flickr30k-original-size")
 
 meta = []
 

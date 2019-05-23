@@ -4,8 +4,8 @@ import pathlib
 from PIL import Image
 
 resize = False
-flowers_raw_dataset_path = pathlib.Path("../tmp/datasets/flowers")
-flowers_processed_dataset_path = pathlib.Path("../datasets/flowers")
+flowers_raw_dataset_path = pathlib.Path("../../tmp/datasets/flowers")
+flowers_processed_dataset_path = pathlib.Path("../../datasets/flowers")
 
 labels_file_path = os.path.join(flowers_raw_dataset_path, "labels.txt")
 with open(labels_file_path, 'r') as f:
