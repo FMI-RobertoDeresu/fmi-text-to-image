@@ -1,10 +1,12 @@
 <component name="ProjectDictionaryState">
   <dictionary name="Roberto">
     <words>
+      <w>autoencoder</w>
       <w>conv</w>
       <w>cvae</w>
       <w>dataset</w>
       <w>datasets</w>
+      <w>filepath</w>
       <w>imgs</w>
       <w>logits</w>
       <w>maxpool</w>

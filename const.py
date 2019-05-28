@@ -1,6 +1,6 @@
 import pathlib
 
-datasets = {
+DATASETS = {
     "mnist": pathlib.Path("./datasets/mnist"),
     "flowers": pathlib.Path("./datasets/oxford-102-flowers"),
     "birds": pathlib.Path("./datasets/cub-200-2011"),

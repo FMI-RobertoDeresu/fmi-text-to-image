@@ -22,7 +22,7 @@ def save_word2vec_captions(word2vec, dataset_name):
     captions_size_mb = sys.getsizeof(captions) / (1024 * 1024)
     print("Captions size for dataset {} is {} MB".format(dataset_name, captions_size_mb))
 
-    captions_word2vec = word2vec.get_embeddings(captions)
+    captions_word2vec = word2vec.get_embeddings(captions, print_every=1000)
 
     word2vec_captions = [[] for _ in range(len(meta))]
     for index, caption_word2vec in zip(indexes, captions_word2vec):
@@ -35,9 +35,9 @@ def save_word2vec_captions(word2vec, dataset_name):
 
 
 def main():
-    datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k"]
+    datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
     word2vec = Word2Vec()
-    for dataset_name in datasets_names[2:]:
+    for dataset_name in datasets_names[4:]:
         print("Processing {}".format(dataset_name))
         start_time = time.time()
         save_word2vec_captions(word2vec, dataset_name)

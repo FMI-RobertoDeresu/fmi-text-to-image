@@ -16,12 +16,13 @@ class Word2Vec:
         self.url = "http://www.robertoderesu.com/ml/word2vec/word-vec"
         self.tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
 
-    def get_embeddings(self, texts):
+    def get_embeddings(self, texts, print_every=None):
         if self.model is None:
             self.load_model()
 
         output = []
-        for text in texts:
+        n_texts = len(texts)
+        for index, text in enumerate(texts):
             words = self.tokenizer.tokenize(text)
             words_embeddings = []
 
@@ -31,6 +32,9 @@ class Word2Vec:
                     words_embeddings.append([x.item() for x in word_embedding])
 
             output.append(words_embeddings)
+
+            if print_every is not None and index % print_every == 0:
+                print("Processed {:0.2f}% {}/{}".format(index/n_texts*100, index, n_texts))
 
         return output
 
