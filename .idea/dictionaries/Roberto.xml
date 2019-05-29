@@ -6,11 +6,15 @@
       <w>cvae</w>
       <w>dataset</w>
       <w>datasets</w>
+      <w>exceded</w>
       <w>filepath</w>
       <w>imgs</w>
       <w>logits</w>
       <w>maxpool</w>
       <w>mnist</w>
+      <w>mpimage</w>
+      <w>mpimg</w>
+      <w>tensorboard</w>
       <w>upsample</w>
       <w>vaegan</w>
     </words>

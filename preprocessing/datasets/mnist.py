@@ -38,8 +38,8 @@ for i, index_list in enumerate(rnd_index_list):
     image = np.pad(image, ((img_pad_with, img_pad_with), (0, 0)), mode="constant", constant_values=0)
 
     img = Image.fromarray(image)
+    img = img.convert("RGB")
     img = img.resize((128, 128), Image.ANTIALIAS)
-    img = img.convert("1")
 
     image_file_name = "img_{}_{}.png".format(str((i+1)).rjust(4, "0"), "_".join(labels))
     image_file_path = os.path.join(dataset_path, "imgs", image_file_name)

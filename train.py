@@ -4,30 +4,42 @@ import const
 import models
 import utils
 import numpy as np
-from PIL import Image
+from matplotlib import image as mpimg
 
 parser = argparse.ArgumentParser()
-parser.add_argument("model", help="model name", default="cae")
-parser.add_argument("dataset", help="dataset name", default="mnist")
+parser.add_argument("-model", help="model name", default="cae")
+parser.add_argument("-dataset", help="dataset name", default="mnist")
 
-if __name__ == "__main__":
+
+def main():
     args = parser.parse_args()
-    model = models.models_dict[args.model]
+    model = models.models_dict[args.model]()
 
-    dataset_dir = os.path.join("datasets", const.DATASETS[args.dataset])
+    dataset_dir = const.DATASETS_PATH[args.dataset]
     dataset_meta = utils.json_utils.load(os.path.join(dataset_dir, "meta.json"))
-    dataset_word2vec_captions = utils.pickle_utils.load(os.path.join(dataset_dir, "word2vec-captions.bin"))
+    dataset_word2vec_captions = np.array(utils.pickle_utils.load(os.path.join(dataset_dir, "word2vec-captions.bin")))
 
     train_data = []
     for meta_index, meta_entry in enumerate(dataset_meta):
         img_file_path = os.path.join(dataset_dir, meta_entry["image"])
-        img = Image.open(img_file_path)
-        img_array = np.asarray(img).astype("float32") / 255.
+        img_array = mpimg.imread(img_file_path)
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
-            word2vec_captions_pad = np.pad(word2vec_captions, ((0, 30), (0, 0)), 'constant', constant_values=0)
-            word2vec_captions_pad = (word2vec_captions_pad.astype("float32") + 1.) / 2.
+            if word2vec_captions.shape[0] > 30:
+                raise Exception("input range exceded")
 
-            train_data.append((word2vec_captions_pad, img_array))
+            padding = ((0, 30 - word2vec_captions.shape[0]), (0, 0))
+            word2vec_captions = np.pad(word2vec_captions, padding, 'constant', constant_values=0)
+            word2vec_captions = (word2vec_captions.astype("float32") + 1.) / 2.
 
-    model.train(train_data, args.dataset)
+            train_data.append((word2vec_captions, img_array))
+
+    x_train, y_train = tuple(zip(*train_data))
+    x_train = np.expand_dims(x_train, 4)
+    y_train = np.array(y_train)
+
+    model.train(x_train, y_train, args.dataset)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,18 +1,16 @@
+import os
 import requests
 import numpy
 import time
 import gensim
 import nltk
 
-import os
-
-
 
 class Word2Vec:
     def __init__(self):
         self.model = None
         self.useNorm = False
-        self.model_path ='{}/data/word2vec_300.bin'.format(os.path.dirname(os.path.realpath(__file__)))
+        self.model_path = '{}/../tmp/word2vec_300.bin'.format(os.path.dirname(os.path.realpath(__file__)))
         self.url = "http://www.robertoderesu.com/ml/word2vec/word-vec"
         self.tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
 
@@ -34,7 +32,7 @@ class Word2Vec:
             output.append(words_embeddings)
 
             if print_every is not None and index % print_every == 0:
-                print("Processed {:0.2f}% {}/{}".format(index/n_texts*100, index, n_texts))
+                print("Processed {:0.2f}% {}/{}".format(index / n_texts * 100, index, n_texts))
 
         return output
 

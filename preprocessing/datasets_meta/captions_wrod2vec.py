@@ -37,7 +37,7 @@ def save_word2vec_captions(word2vec, dataset_name):
 def main():
     datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
     word2vec = Word2Vec()
-    for dataset_name in datasets_names[4:]:
+    for dataset_name in datasets_names[:1]:
         print("Processing {}".format(dataset_name))
         start_time = time.time()
         save_word2vec_captions(word2vec, dataset_name)
