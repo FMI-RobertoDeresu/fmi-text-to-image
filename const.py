@@ -7,3 +7,5 @@ DATASETS_PATH = {
     "flickr": pathlib.Path("./datasets/flickr30k"),
     "coco": pathlib.Path("./datasets/coco-train-2014"),
 }
+
+INPUT_SHAPE = (3, 300, 1)

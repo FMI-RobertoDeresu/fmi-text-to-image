@@ -1,23 +1,30 @@
+import os
 import pathlib
+import utils
+import numpy as np
 import time
+from datetime import datetime
 from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+from keras import optimizers, losses
 
 
 class CAE:
-    def __init__(self):
-        self.tensor_board_log_dir = 'tensorboard/cae/{dataset}'
-        self.checkpoint_dir = "checkpoints/cae/{{dataset}}/{}/".format(int(time.time()))
-        self.checkpoint_filepath_template = self.checkpoint_dir + \
-                                            "checkpoint-{{epoch:02d}}-{{val_loss:.2f}}-{{val_acc:.2f}}.hdf5"
-        self.best_weights_filepath = self.checkpoint_dir + "best_weights.hdf5"
+    def __init__(self, input_shape, dataset_name):
+        self.input_shape = input_shape
+        self.dataset_name = dataset_name
+        self.print_model_summary = False
 
-        self._create_model()
+        self.train_results_path = str(pathlib.Path("tmp/train/cae/{}/results.json".format(dataset_name)))
+        self.weights_path = str(pathlib.Path("tmp/train/cae/{}/weights/{{out_folder}}.hdf5".format(dataset_name)))
+        self.tensor_board_log_dir = str(pathlib.Path('tmp/tensorboard/cae/{}/{{out_folder}}'.format(dataset_name)))
 
-    def _create_model(self):
+        self._create_model(input_shape)
+
+    def _create_model(self, input_shape):
         # input
-        input_layer = Input(shape=(30, 300, 1))
+        input_layer = Input(shape=input_shape)
 
         # encoder
         encoder = Conv2D(2, (3, 3), activation='relu', padding='same', input_shape=input_layer.shape)(input_layer)
@@ -72,48 +79,135 @@ class CAE:
         decoder = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(decoder)
 
         self.model = Model(input_layer, decoder)
-        self.model.compile(optimizer='adadelta', loss='binary_crossentropy', metrics=['accuracy'])
-        self.model.summary()
 
-    def train(self, x_train, y_train, dataset):
-        # checkpoint
-        checkpoint_filepath = self.checkpoint_filepath_template.format(dataset=dataset)
-        pathlib.Path(checkpoint_filepath).parent.mkdir(parents=True, exist_ok=True)
-        checkpoint = ModelCheckpoint(filepath=checkpoint_filepath,
-                                     monitor='val_loss',
-                                     save_best_only=True,
-                                     save_weights_only=True,
-                                     mode='min')
+        if self.print_model_summary:
+            self.model.summary()
 
-        # checkpoint
-        best_weights_filepath = self.best_weights_filepath.format(dataset=dataset)
-        pathlib.Path(best_weights_filepath).parent.mkdir(parents=True, exist_ok=True)
-        checkpoint_best = ModelCheckpoint(filepath=best_weights_filepath,
-                                          monitor='val_loss',
-                                          save_best_only=True,
-                                          save_weights_only=True,
-                                          mode='min')
+    def train(self, x_train, y_train, x_test, y_test,
+              optimizer=optimizers.Adam(),
+              loss=losses.categorical_crossentropy,
+              batch_size=128):
 
-        # early stopping
-        early_stopping = EarlyStopping(monitor='val_loss',
-                                       min_delta=0.01,
-                                       patience=5,
-                                       verbose=1,
-                                       mode='min',
-                                       restore_best_weights=True)
+        train_uid = utils.uid()
+        description = "{train_uid} opt={optimizer} loss={loss} batch={batch_size}".format(
+            train_uid=train_uid,
+            optimizer=optimizer.__class__.__name__,
+            loss=loss.__name__,
+            batch_size=batch_size)
 
-        # tensor board
-        tensor_board_log_dir = self.tensor_board_log_dir.format(dataset=dataset)
-        pathlib.Path(tensor_board_log_dir).mkdir(parents=True, exist_ok=True)
-        tensor_board = TensorBoard(log_dir=tensor_board_log_dir)
+        print("Training: {}".format(description))
+        weights_path = pathlib.Path(self.weights_path.format(out_folder=description))
+        weights_path.parent.mkdir(parents=True, exist_ok=True)
+
+        tensor_board_log_dir = pathlib.Path(self.tensor_board_log_dir.format(out_folder=description))
+        tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
+
+        # callbacks
+        checkpoint_weights = ModelCheckpoint(
+            filepath=str(weights_path),
+            verbose=0,
+            monitor='val_loss',
+            save_best_only=True,
+            save_weights_only=True,
+            mode='min')
+
+        early_stopping = EarlyStopping(
+            monitor='val_loss',
+            min_delta=0.001,
+            patience=3,
+            verbose=1,
+            mode='min',
+            restore_best_weights=True)
+
+        tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
+
+        callbacks = [checkpoint_weights, tensor_board, early_stopping]
+
+        # compile
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         # fit
-        callbacks = [checkpoint, checkpoint_best, tensor_board, early_stopping]
-        self.model.fit(x=x_train,
-                       y=y_train,
-                       batch_size=128,
-                       epochs=100,
-                       verbose=2,
-                       shuffle=True,
-                       callbacks=callbacks,
-                       validation_split=0.1)
+        start_time = time.time()
+        fit = self.model.fit(
+            x=x_train,
+            y=y_train,
+            batch_size=batch_size,
+            epochs=500,
+            # epochs=1,
+            verbose=2,
+            shuffle=True,
+            callbacks=callbacks,
+            validation_split=0.2)
+
+        # evaluate
+        evaluate = self.model.evaluate(x=x_test, y=y_test, verbose=0)
+        loss, accuracy = evaluate[:2]
+
+        # save results
+        self._save_result(train_uid, description, start_time, fit, loss, accuracy, early_stopping)
+
+    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, early_stopping):
+        if os.path.isfile(self.train_results_path):
+            train_results = utils.json_utils.load(self.train_results_path)
+        else:
+            train_results = {
+                "model": self.__class__.__name__,
+                "dataset": self.dataset_name,
+                "input_shape": self.input_shape,
+                "training_sessions": []
+            }
+
+        train_results["training_sessions"].append({
+            "uid": train_uid,
+            "description": description,
+            "start_time": str(datetime.fromtimestamp(start_time)),
+            "end_time": str(datetime.now()),
+            "elapsed_time": str(datetime.fromtimestamp(time.time()) - datetime.fromtimestamp(start_time)),
+            "trained_epochs": len(fit.epoch),
+            "model": {
+                "optimizer": fit.model.optimizer.__class__.__name__,
+                "loss": fit.model.loss_functions[0].__name__
+            },
+            "evaluation": {
+                "loss": loss,
+                "acc": accuracy,
+            },
+            "fit_params": {
+                "batch_size": fit.params["batch_size"],
+                "epochs": fit.params["epochs"]
+            },
+            "best_checkpoint_path": self.weights_path,
+            "early_stopping": {
+                "monitor": early_stopping.monitor,
+                "min_delta": early_stopping.min_delta,
+                "patience": early_stopping.patience
+            }
+        })
+
+        utils.json_utils.dump(train_results, self.train_results_path)
+
+    def load_weights(self, mode="last"):
+        train_results = utils.json_utils.load(self.train_results_path)
+        train_session = train_results["training_sessions"]
+
+        if mode == "last":
+            weights_file_path = train_session[-1]["best_checkpoint_path"]
+        elif mode == "min_loss":
+            results_losses = [result["evaluation"]["loss"] for result in train_session]
+            min_loss_index = np.argmin(results_losses)
+            weights_file_path = train_session[min_loss_index]["best_checkpoint_path"]
+        elif mode == "max_acc":
+            results_accs = [result["evaluation"]["acc"] for result in train_session]
+            max_acc_index = np.argmax(results_accs)
+            weights_file_path = train_session[max_acc_index]["best_checkpoint_path"]
+        else:
+            raise Exception("'{}' mode not implemented.".format(mode))
+
+        if not os.path.isfile(weights_file_path):
+            raise Exception("weights file '{}' not found.".format(weights_file_path))
+
+        self.model.load_weights(weights_file_path)
+
+    def predict(self, x_predict):
+        prediction = self.model.predict(x=x_predict, batch_size=128)
+        return prediction
