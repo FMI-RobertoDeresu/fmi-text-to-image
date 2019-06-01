@@ -2,10 +2,16 @@ import pathlib
 import os
 import utils
 import nltk
-from models import CAE
+import argparse
+import tensorflow as tf
+import time
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-action", help="action to execute", default="using_gpu")
 
 
-def main():
+def test_cae():
+    from models import CAE
     cae = CAE((30, 300, 1), "")
 
 
@@ -35,6 +41,57 @@ def max_words_per_caption():
         print("{}: {} ({} - {})".format(dataset_name, max_n_words, max_n_words_image, max_n_words_caption))
 
 
+def using_gpu():
+    # Creates a graph.
+    a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
+    b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
+    c = tf.matmul(a, b)
+
+    # Creates a session with log_device_placement set to True.
+    with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+        print(sess.run(c))
+
+
+def test_tpu_flops():
+    n = 4096
+    count = 100
+
+    def flops():
+        x = tf.random_uniform([n, n])
+        y = tf.random_uniform([n, n])
+
+        def _matmul(x, y):
+            return tf.tensordot(x, y, axes=[[1], [0]]), y
+
+        return tf.reduce_sum(tf.contrib.tpu.repeat(count, _matmul, [x, y]))
+
+    tpu_ops = tf.contrib.tpu.batch_parallel(flops, [], num_shards=8)
+    tpu_address = 'grpc://' + "10.240.1.2"
+
+    session = tf.Session(tpu_address)
+    try:
+        print('Warming up...')
+        session.run(tf.contrib.tpu.initialize_system())
+        session.run(tpu_ops)
+        print('Profiling')
+        start = time.time()
+        session.run(tpu_ops)
+        end = time.time()
+        elapsed = end - start
+        print(elapsed, 'TFlops: {:.2f}'.format(1e-12 * 8 * count * 2 * n * n * n / elapsed))
+    finally:
+        session.run(tf.contrib.tpu.shutdown_system())
+        session.close()
+
+
 if __name__ == '__main__':
-    main()
-    # max_words_per_caption()
+    args = parser.parse_args()
+
+    actions_dict = {
+        "test_cae": test_cae,
+        "max_words_per_caption": max_words_per_caption,
+        "using_gpu": using_gpu,
+        "test_tpu_flops": test_tpu_flops
+    }
+
+    actions_dict[args.action]()
