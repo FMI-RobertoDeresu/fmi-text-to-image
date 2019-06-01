@@ -4,7 +4,7 @@ import utils
 import numpy as np
 import time
 from datetime import datetime
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, GaussianNoise, Conv2DTranspose
 from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from keras import optimizers, losses
@@ -23,60 +23,66 @@ class CAE:
         self._create_model(input_shape)
 
     def _create_model(self, input_shape):
+        # N, M, _ = input_shape
+
         # input
-        input_layer = Input(shape=input_shape)
+        input_layer = Input(shape=input_shape)  # (N, M, 1)
+
+        # noise
+        #input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
 
         # encoder
-        encoder = Conv2D(2, (3, 3), activation='relu', padding='same', input_shape=input_layer.shape)(input_layer)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (50, 150, )
+        encoder = Conv2D(2, (3, 3), activation='relu', padding='same')(input_layer)  # (N, M, 2)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
-        encoder = Conv2D(4, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (25, 75, )
+        encoder = Conv2D(4, (3, 3), activation='relu', padding='same')(encoder)  # (N/2 , M/2, 4)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/4 , M/4, 4)
 
-        encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (13, 38, )
+        encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)  # (N/4 , M/4, 8)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/8 , M/8, 8)
 
-        encoder = Conv2D(16, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (7, 19, )
+        encoder = Conv2D(16, (3, 3), activation='relu', padding='same')(encoder)  # (N/8 , M/8, 16)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/16 , M/16, 16)
 
-        encoder = Conv2D(32, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (4, 10, )
+        encoder = Conv2D(32, (3, 3), activation='relu', padding='same')(encoder)  # (N/16 , M/16, 32)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/32 , M/32, 32)
 
-        encoder = Conv2D(64, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (2, 5, )
+        encoder = Conv2D(64, (3, 3), activation='relu', padding='same')(encoder)  # (N/32 , M/32, 64)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/64 , M/64, 64)
 
-        encoder = Conv2D(128, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (1, 3, )
+        encoder = Conv2D(128, (3, 3), activation='relu', padding='same')(encoder)  # (N/64 , M/64, 128)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/128 , M/128, 128)
 
-        encoder = Conv2D(256, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (1, 2, )
+        encoder = Conv2D(256, (3, 3), activation='relu', padding='same')(encoder)  # (N/128 , M/128, 256)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/256 , M/256, 256)
 
-        encoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (1, 1, )
+        encoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)  # (N/256 , M/256, 512)
+        encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
+        # Shape here must be: (1, 1, 512)
 
         # decoder
-        decoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (2, 2, )
+        decoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)  # (1 , 1, 512)
+        decoder = UpSampling2D((2, 2))(decoder)  # (2, 2, 512)
 
-        decoder = Conv2D(256, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (4, 4, )
+        decoder = Conv2D(256, kernel_size=(3, 3), activation='relu', padding='same')(decoder)  # (2, 2, 256)
+        decoder = UpSampling2D((2, 2))(decoder)  # (4, 4, 256)
 
-        decoder = Conv2D(128, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (8, 8, )
+        decoder = Conv2D(128, (3, 3), activation='relu', padding='same')(decoder)  # (4, 4, 128)
+        decoder = UpSampling2D((2, 2))(decoder)  # (8, 8, 128)
 
-        decoder = Conv2D(64, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (16, 16, )
+        decoder = Conv2D(64, (3, 3), activation='relu', padding='same')(decoder)  # (8, 8, 64)
+        decoder = UpSampling2D((2, 2))(decoder)  # (16, 16, 64)
 
-        decoder = Conv2D(32, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (32, 32, )
+        decoder = Conv2D(32, (3, 3), activation='relu', padding='same')(decoder)  # (16, 16, 32)
+        decoder = UpSampling2D((2, 2))(decoder)  # (32, 32, 32)
 
-        decoder = Conv2D(16, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (64, 64, )
+        decoder = Conv2D(16, (3, 3), activation='relu', padding='same')(decoder)  # (32, 32, 316)
+        decoder = UpSampling2D((2, 2))(decoder)  # (64, 64, 16)
 
-        decoder = Conv2D(8, (3, 3), activation='relu', padding='same')(decoder)
-        decoder = UpSampling2D((2, 2))(decoder)  # (128, 128, )
+        decoder = Conv2D(8, (3, 3), activation='relu', padding='same')(decoder)  # (64, 64, 8)
+        decoder = UpSampling2D((2, 2))(decoder)  # (128, 128, 8)
 
-        decoder = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(decoder)
+        decoder = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(decoder)  # (128, 128,  3)
 
         self.model = Model(input_layer, decoder)
 

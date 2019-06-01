@@ -23,7 +23,9 @@ letter_name = {
 }
 
 (x_train, y_train), _ = tf.keras.datasets.mnist.load_data()
-rnd_index_list = np.random.randint(60000, size=(1000, 3))
+
+n_samples = 10000
+rnd_index_list = np.random.randint(60000, size=(n_samples, 3))
 img_pad_with = 9 * (3 - 1)
 
 meta = []

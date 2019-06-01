@@ -13,7 +13,7 @@ from keras import optimizers, losses
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist")
+parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 
 
 def main():
@@ -42,15 +42,15 @@ def main():
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
 
-    optimizers_options = [
-        optimizers.Adam(),
+    optimizers_options = ([
+        optimizers.Adam(clipnorm=5.),
         optimizers.Adadelta(),
         optimizers.Adagrad(),
         optimizers.Adamax(),
         optimizers.SGD()
-    ]
+    ])[0:1]
 
-    losses_options = [
+    losses_options = ([
         losses.binary_crossentropy,
         losses.categorical_crossentropy,
         losses.sparse_categorical_crossentropy,
@@ -61,9 +61,13 @@ def main():
         losses.mean_absolute_error,
         losses.mean_squared_logarithmic_error,
         losses.mean_absolute_percentage_error
-    ]
+    ])[1:2]
 
-    batch_size_options = [32, 64, 128]
+    batch_size_options = ([
+        32,
+        64,
+        128
+    ])[0:1]
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
     for optimizer, loss, batch_size in itertools.product(optimizers_options, losses_options, batch_size_options):
