@@ -140,7 +140,7 @@ class CAE:
             batch_size=batch_size,
             epochs=500,
             # epochs=1,
-            verbose=2,
+            verbose=1,
             shuffle=True,
             callbacks=callbacks,
             validation_split=0.2)

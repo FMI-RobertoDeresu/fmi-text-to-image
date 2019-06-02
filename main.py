@@ -5,6 +5,7 @@ import nltk
 import argparse
 import tensorflow as tf
 import time
+from tensorflow.python.client import device_lib
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-action", help="action to execute", default="using_gpu")
@@ -82,6 +83,13 @@ def test_tpu_flops():
     finally:
         session.run(tf.contrib.tpu.shutdown_system())
         session.close()
+        
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    for index, device in enumerate(local_device_protos):
+        print("\nDevice {}:".format(index))
+        print(device)
 
 
 if __name__ == '__main__':
@@ -91,7 +99,8 @@ if __name__ == '__main__':
         "test_cae": test_cae,
         "max_words_per_caption": max_words_per_caption,
         "using_gpu": using_gpu,
-        "test_tpu_flops": test_tpu_flops
+        "test_tpu_flops": test_tpu_flops,
+        "get_available_gpus": get_available_gpus
     }
 
     actions_dict[args.action]()

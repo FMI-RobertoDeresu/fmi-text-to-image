@@ -48,7 +48,7 @@ def main():
         optimizers.Adagrad(),
         optimizers.Adamax(),
         optimizers.SGD()
-    ])[0:1]
+    ])#[0:1]
 
     losses_options = ([
         losses.binary_crossentropy,
@@ -61,19 +61,22 @@ def main():
         losses.mean_absolute_error,
         losses.mean_squared_logarithmic_error,
         losses.mean_absolute_percentage_error
-    ])[1:2]
+    ])#[1:2]
 
     batch_size_options = ([
         32,
         64,
         128
-    ])[0:1]
+    ])#[0:1]
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
     for optimizer, loss, batch_size in itertools.product(optimizers_options, losses_options, batch_size_options):
         try:
+            desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
+            print(desc)
             model.train(x_train, y_train, x_test, y_test, optimizer=optimizer, loss=loss, batch_size=batch_size)
         except Exception as exception:
+            print("Error for {}".format(desc))
             traceback.print_exc()
 
 
