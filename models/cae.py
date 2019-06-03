@@ -12,7 +12,7 @@ from keras.callbacks import EarlyStopping
 
 
 class CAE:
-    def __init__(self, input_shape, dataset_name, tpu_addr):
+    def __init__(self, input_shape, dataset_name, use_tpu):
         self.input_shape = input_shape
         self.dataset_name = dataset_name
         self.print_model_summary = False
@@ -21,9 +21,9 @@ class CAE:
         self.weights_path = str(pathlib.Path("tmp/train/cae/{}/weights/{{out_folder}}.hdf5".format(dataset_name)))
         self.tensor_board_log_dir = str(pathlib.Path('tmp/tensorboard/cae/{}/{{out_folder}}'.format(dataset_name)))
 
-        self._create_model(input_shape, tpu_addr)
+        self._create_model(input_shape, use_tpu)
 
-    def _create_model(self, input_shape, tpu_addr):
+    def _create_model(self, input_shape, use_tpu):
         # N, M, _ = input_shape
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
@@ -88,11 +88,11 @@ class CAE:
         if self.print_model_summary:
             self.model.summary()
 
-        if tpu_addr is not None:
+        if use_tpu is not None:
             self.model = tf.contrib.tpu.keras_to_tpu_model(
                 self.model,
                 strategy=tf.contrib.tpu.TPUDistributionStrategy(
-                    tf.contrib.cluster_resolver.TPUClusterResolver(tpu='grpc://' + tpu_addr)
+                    tf.contrib.cluster_resolver.TPUClusterResolver()
                 )
             )
 

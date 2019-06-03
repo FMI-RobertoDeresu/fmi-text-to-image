@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
 parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 
-parser.add_argument("-tpu-addr", help="tpu address", default="10.240.1.2")
+parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 
 
 def main():
@@ -30,8 +30,8 @@ def main():
                 "-batch-size-index", str(batch_size)
             ]
 
-            if args.tpu_addr is not None:
-                subproc_args.extend(["-tpu-addr", args.tpu_addr])
+            if args.use_tpu is not None:
+                subproc_args.extend(["-use-tpu"])
 
             retcode = subprocess.call(subproc_args)
             print("Code={}".format(retcode))
