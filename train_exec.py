@@ -30,7 +30,7 @@ def main():
                 "-batch-size-index", str(batch_size)
             ]
 
-            if args.use_tpu is not None:
+            if args.use_tpu:
                 subproc_args.extend(["-use-tpu"])
 
             retcode = subprocess.call(subproc_args)

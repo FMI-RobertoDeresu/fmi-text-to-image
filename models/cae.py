@@ -5,10 +5,9 @@ import numpy as np
 import time
 import tensorflow as tf
 from datetime import datetime
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
-from tensorflow.keras.models import Model
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-from keras.callbacks import EarlyStopping
+from tensorflow.contrib.keras.api.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
+from tensorflow.contrib.keras.api.keras.models import Model
+from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 
 
 class CAE:
@@ -88,7 +87,7 @@ class CAE:
         if self.print_model_summary:
             self.model.summary()
 
-        if use_tpu is not None:
+        if use_tpu:
             self.model = tf.contrib.tpu.keras_to_tpu_model(
                 self.model,
                 strategy=tf.contrib.tpu.TPUDistributionStrategy(

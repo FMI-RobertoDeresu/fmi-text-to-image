@@ -6,7 +6,7 @@ import utils
 import traceback
 import numpy as np
 import pathlib
-from tensorflow.keras import optimizers, losses
+from tensorflow.contrib.keras import optimizers, losses
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
 
