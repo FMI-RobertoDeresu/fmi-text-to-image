@@ -10,6 +10,7 @@ from tensorflow.contrib.keras.api.keras.models import Model
 from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from tensorflow.contrib.keras import optimizers, losses
 
+
 class CAE:
     def __init__(self, input_shape, dataset_name, use_tpu):
         self.input_shape = input_shape
@@ -165,8 +166,8 @@ class CAE:
                 "loss": fit.model.loss_functions[0].__name__
             },
             "evaluation": {
-                "loss": loss,
-                "acc": accuracy,
+                "loss": str(loss),
+                "acc": str(accuracy),
             },
             "fit_params": {
                 "batch_size": fit.params["batch_size"],
