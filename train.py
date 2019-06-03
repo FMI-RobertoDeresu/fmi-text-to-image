@@ -5,6 +5,7 @@ import models
 import utils
 import traceback
 import numpy as np
+import pathlib
 from tensorflow.keras import optimizers, losses
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
@@ -54,7 +55,7 @@ def main():
 
     data = []
     for meta_index, meta_entry in enumerate(dataset_meta):
-        img_file_path = os.path.join(dataset_dir, meta_entry["image"])
+        img_file_path = str(pathlib.Path(os.path.join(dataset_dir, meta_entry["image"])))
         img_array = mpimg.imread(img_file_path)
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
