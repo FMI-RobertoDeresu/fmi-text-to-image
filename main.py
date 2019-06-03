@@ -5,10 +5,15 @@ import nltk
 import argparse
 import tensorflow as tf
 import time
+import subprocess
 from tensorflow.python.client import device_lib
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-action", help="action to execute", default="using_gpu")
+parser.add_argument("-action", help="action to execute", default="main")
+
+
+def main():
+    subprocess.call(["python", "train.py", "-model", "test1", "-dataset", "test2", "-batch-size-index", "3"])
 
 
 def test_cae():
@@ -83,7 +88,7 @@ def test_tpu_flops():
     finally:
         session.run(tf.contrib.tpu.shutdown_system())
         session.close()
-        
+
 
 def get_available_gpus():
     local_device_protos = device_lib.list_local_devices()
@@ -96,6 +101,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     actions_dict = {
+        "main": main,
         "test_cae": test_cae,
         "max_words_per_caption": max_words_per_caption,
         "using_gpu": using_gpu,

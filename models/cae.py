@@ -29,7 +29,7 @@ class CAE:
         input_layer = Input(shape=input_shape)  # (N, M, 1)
 
         # noise
-        #input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
+        # input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
 
         # encoder
         encoder = Conv2D(2, (3, 3), activation='relu', padding='same')(input_layer)  # (N, M, 2)
@@ -89,11 +89,7 @@ class CAE:
         if self.print_model_summary:
             self.model.summary()
 
-    def train(self, x_train, y_train, x_test, y_test,
-              optimizer=optimizers.Adam(),
-              loss=losses.categorical_crossentropy,
-              batch_size=128):
-
+    def train(self, x_train, y_train, x_test, y_test, optimizer, loss, batch_size):
         train_uid = utils.uid()
         description = "{train_uid} opt={optimizer} loss={loss} batch={batch_size}".format(
             train_uid=train_uid,
