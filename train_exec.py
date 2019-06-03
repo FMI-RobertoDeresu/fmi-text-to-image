@@ -1,9 +1,7 @@
-import os
 import itertools
 import traceback
 import argparse
 import subprocess
-from train import optimizer_options, loss_options, batch_size_options
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
@@ -15,9 +13,9 @@ parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 def main():
     args = parser.parse_args()
 
-    optimizer_indexes = range(len(optimizer_options))
-    loss_indexes = range(len(loss_options))
-    batch_size_indexes = range(len(batch_size_options))
+    optimizer_indexes = range(5)
+    loss_indexes = range(9)
+    batch_size_indexes = range(3)
 
     for optimizer, loss, batch_size in itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes):
         try:

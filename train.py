@@ -19,34 +19,34 @@ parser.add_argument("-batch-size-index", help="batch size index", type=int, defa
 
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 
-optimizer_options = ([
-    optimizers.Adam(clipnorm=5.),  # 0
-    optimizers.Adadelta(clipnorm=5.),  # 1
-    optimizers.Adagrad(clipnorm=5.),  # 2
-    optimizers.Adamax(clipnorm=5.),  # 3
-    optimizers.SGD(clipnorm=5.)  # 4
-])  # [0:1]
-
-loss_options = ([
-    losses.binary_crossentropy,  # 0
-    losses.categorical_crossentropy,  # 1
-    losses.categorical_hinge,  # 2
-    losses.squared_hinge,  # 3
-    losses.kullback_leibler_divergence,  # 4
-    losses.mean_squared_error,  # 5
-    losses.mean_absolute_error,  # 6
-    losses.mean_squared_logarithmic_error,  # 7
-    losses.mean_absolute_percentage_error  # 8
-])  # [6:9]
-
-batch_size_options = ([
-    32,
-    64,
-    128
-])  # [:]
-
 
 def main():
+    optimizer_options = ([
+        optimizers.Adam(clipnorm=5.),  # 0
+        optimizers.Adadelta(clipnorm=5.),  # 1
+        optimizers.Adagrad(clipnorm=5.),  # 2
+        optimizers.Adamax(clipnorm=5.),  # 3
+        optimizers.SGD(clipnorm=5.)  # 4
+    ])  # [0:1]
+
+    loss_options = ([
+        losses.binary_crossentropy,  # 0
+        losses.categorical_crossentropy,  # 1
+        losses.categorical_hinge,  # 2
+        losses.squared_hinge,  # 3
+        losses.kullback_leibler_divergence,  # 4
+        losses.mean_squared_error,  # 5
+        losses.mean_absolute_error,  # 6
+        losses.mean_squared_logarithmic_error,  # 7
+        losses.mean_absolute_percentage_error  # 8
+    ])  # [6:9]
+
+    batch_size_options = ([
+        32,
+        64,
+        128
+    ])  # [:]
+
     args = parser.parse_args()
 
     dataset_dir = const.DATASETS_PATH[args.dataset]
