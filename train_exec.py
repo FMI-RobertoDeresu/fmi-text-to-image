@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
 parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 
-parser.add_argument("-tpu-addr", help="tpu address", default=None)
+parser.add_argument("-tpu-addr", help="tpu address", default="10.240.1.2")
 
 
 def main():
