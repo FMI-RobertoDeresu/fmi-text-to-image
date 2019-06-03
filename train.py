@@ -43,40 +43,39 @@ def main():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
 
     optimizers_options = ([
-        optimizers.Adam(clipnorm=5.),
-        optimizers.Adadelta(),
-        optimizers.Adagrad(),
-        optimizers.Adamax(),
-        optimizers.SGD()
+        optimizers.Adam(clipnorm=5.), #0
+        optimizers.Adadelta(clipnorm=5.), #1
+        optimizers.Adagrad(clipnorm=5.), #2
+        optimizers.Adamax(clipnorm=5.), #3
+        optimizers.SGD(clipnorm=5.) #4
     ])#[0:1]
 
     losses_options = ([
-        losses.binary_crossentropy,
-        losses.categorical_crossentropy,
-        losses.sparse_categorical_crossentropy,
-        losses.categorical_hinge,
-        losses.squared_hinge,
-        losses.kullback_leibler_divergence,
-        losses.mean_squared_error,
-        losses.mean_absolute_error,
-        losses.mean_squared_logarithmic_error,
-        losses.mean_absolute_percentage_error
-    ])#[1:2]
+        losses.binary_crossentropy, #0
+        losses.categorical_crossentropy, #1
+        losses.categorical_hinge, #2
+        losses.squared_hinge, #3
+        losses.kullback_leibler_divergence, #4
+        losses.mean_squared_error, #5
+        losses.mean_absolute_error, #6
+        losses.mean_squared_logarithmic_error, #7
+        losses.mean_absolute_percentage_error #8
+    ])#[6:9]
 
     batch_size_options = ([
         32,
         64,
         128
-    ])#[0:1]
+    ])#[:]
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
     for optimizer, loss, batch_size in itertools.product(optimizers_options, losses_options, batch_size_options):
         try:
             desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
-            print(desc)
+            print("\n\n" + desc)
             model.train(x_train, y_train, x_test, y_test, optimizer=optimizer, loss=loss, batch_size=batch_size)
         except Exception as exception:
-            print("Error for {}".format(desc))
+            print("\n\nError for {}".format(desc))
             traceback.print_exc()
 
 
