@@ -5,7 +5,7 @@ import models
 import utils
 import traceback
 import numpy as np
-from keras import optimizers, losses
+from tensorflow.keras import optimizers, losses
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
 
@@ -15,6 +15,8 @@ parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
+
+parser.add_argument("-tpu-addr", help="tpu address", default=None)
 
 optimizer_options = ([
     optimizers.Adam(clipnorm=5.),  # 0
@@ -69,7 +71,7 @@ def main():
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset, args.tpu_addr)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]
