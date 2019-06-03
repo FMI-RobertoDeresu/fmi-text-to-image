@@ -8,7 +8,7 @@ from datetime import datetime
 from tensorflow.contrib.keras.api.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, UpSampling2D
 from tensorflow.contrib.keras.api.keras.models import Model
 from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
-
+from tensorflow.contrib.keras import optimizers, losses
 
 class CAE:
     def __init__(self, input_shape, dataset_name, use_tpu):
@@ -119,6 +119,7 @@ class CAE:
         callbacks = [checkpoint_weights, tensor_board, early_stopping]
 
         # compile
+        optimizer = optimizers.Adam(clipnorm=5.)
         self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         # fit
