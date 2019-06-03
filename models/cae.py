@@ -3,15 +3,16 @@ import pathlib
 import utils
 import numpy as np
 import time
+import tensorflow as tf
 from datetime import datetime
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, GaussianNoise, Conv2DTranspose
-from keras.models import Model
-from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
-from keras import optimizers, losses
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.callbacks import EarlyStopping
 
 
 class CAE:
-    def __init__(self, input_shape, dataset_name):
+    def __init__(self, input_shape, dataset_name, tpu_addr):
         self.input_shape = input_shape
         self.dataset_name = dataset_name
         self.print_model_summary = False
@@ -20,11 +21,10 @@ class CAE:
         self.weights_path = str(pathlib.Path("tmp/train/cae/{}/weights/{{out_folder}}.hdf5".format(dataset_name)))
         self.tensor_board_log_dir = str(pathlib.Path('tmp/tensorboard/cae/{}/{{out_folder}}'.format(dataset_name)))
 
-        self._create_model(input_shape)
+        self._create_model(input_shape, tpu_addr)
 
-    def _create_model(self, input_shape):
+    def _create_model(self, input_shape, tpu_addr):
         # N, M, _ = input_shape
-
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
 
@@ -85,9 +85,16 @@ class CAE:
         decoder = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(decoder)  # (128, 128,  3)
 
         self.model = Model(input_layer, decoder)
-
         if self.print_model_summary:
             self.model.summary()
+
+        if tpu_addr is not None:
+            self.model = tf.contrib.tpu.keras_to_tpu_model(
+                self.model,
+                strategy=tf.contrib.tpu.TPUDistributionStrategy(
+                    tf.contrib.cluster_resolver.TPUClusterResolver(tpu='grpc://' + tpu_addr)
+                )
+            )
 
     def train(self, x_train, y_train, x_test, y_test, optimizer, loss, batch_size):
         train_uid = utils.uid()
