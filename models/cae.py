@@ -92,7 +92,7 @@ class CAE:
             self.model = tf.contrib.tpu.keras_to_tpu_model(
                 self.model,
                 strategy=tf.contrib.tpu.TPUDistributionStrategy(
-                    tf.contrib.cluster_resolver.TPUClusterResolver()
+                    tf.contrib.cluster_resolver.TPUClusterResolver(tpu='demo-tpu')
                 )
             )
 
