@@ -11,7 +11,6 @@ parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 
 def main():
     args = parser.parse_args()
-    print("Test")
 
     optimizer_indexes = range(len(optimizer_options))
     loss_indexes = range(len(loss_options))
