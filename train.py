@@ -45,7 +45,8 @@ def main():
     batch_size_options = ([
         32,
         64,
-        128
+        128,
+        256
     ])
 
     args = parser.parse_args()

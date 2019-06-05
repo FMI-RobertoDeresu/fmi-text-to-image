@@ -114,7 +114,7 @@ class CAE:
 
         tensor_board = TensorBoard(log_dir=tensor_board_log_dir)
 
-        callbacks = [checkpoint_weights, tensor_board, early_stopping]
+        callbacks = [early_stopping]
 
         # compile
         optimizer = optimizers.Adam(clipnorm=5.)
@@ -132,6 +132,8 @@ class CAE:
             shuffle=True,
             callbacks=callbacks,
             validation_split=0.2)
+
+        self.model.save_weights(weights_path)
 
         # evaluate
         evaluate = self.model.evaluate(x=x_test, y=y_test, verbose=0)
