@@ -1,25 +1,22 @@
 import os
-import pathlib
 import utils
-import numpy as np
 import time
 import tensorflow as tf
+from pathlib import Path
 from datetime import datetime
-from tensorflow.contrib.keras.api.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, UpSampling2D
-from tensorflow.contrib.keras.api.keras.models import Model
-from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
-from tensorflow.contrib.keras import optimizers, losses
+from tf_imports import Model, Input, Conv2D, MaxPooling2D, Conv2DTranspose
+from tf_imports import TensorBoard, ModelCheckpoint, EarlyStopping, optimizers
 
 
 class CAE:
-    def __init__(self, input_shape, dataset_name, use_tpu):
+    def __init__(self, input_shape, out_folder, use_tpu):
         self.input_shape = input_shape
-        self.dataset_name = dataset_name
+        self.out_folder = out_folder
         self.print_model_summary = False
 
-        self.train_results_path = str(pathlib.Path("tmp/train/cae/{}/results.json".format(dataset_name)))
-        self.weights_path = str(pathlib.Path("tmp/train/cae/{}/weights/{{out_folder}}.hdf5".format(dataset_name)))
-        self.tensor_board_log_dir = str(pathlib.Path('tmp/tensorboard/cae/{}/{{out_folder}}'.format(dataset_name)))
+        self.train_results_path = str(Path("{}/results.json".format(out_folder)))
+        self.weights_path = str(Path("{}/weights/{{weights_name}}.hdf5".format(out_folder)))
+        self.tensor_board_log_dir = str(Path('{}/tensorboard/{{folder_name}}'.format(out_folder)))
 
         self._create_model(input_shape, use_tpu)
 
@@ -92,15 +89,15 @@ class CAE:
             batch_size=batch_size)
 
         print("Training: {}".format(description))
-        weights_path = pathlib.Path(self.weights_path.format(out_folder=description))
-        weights_path.parent.mkdir(parents=True, exist_ok=True)
+        weights_path = str(Path(self.weights_path.format(weights_name=description)))
+        Path(weights_path).parent.mkdir(parents=True, exist_ok=True)
 
-        tensor_board_log_dir = pathlib.Path(self.tensor_board_log_dir.format(out_folder=description))
-        tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
+        tensor_board_log_dir = str(Path(self.tensor_board_log_dir.format(folder_name=description)))
+        Path(tensor_board_log_dir).mkdir(parents=True, exist_ok=True)
 
         # callbacks
         checkpoint_weights = ModelCheckpoint(
-            filepath=str(weights_path),
+            filepath=weights_path,
             verbose=0,
             monitor='val_loss',
             save_best_only=True,
@@ -115,7 +112,7 @@ class CAE:
             mode='min',
             restore_best_weights=True)
 
-        tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
+        tensor_board = TensorBoard(log_dir=tensor_board_log_dir)
 
         callbacks = [checkpoint_weights, tensor_board, early_stopping]
 
@@ -141,15 +138,15 @@ class CAE:
         loss, accuracy = evaluate[:2]
 
         # save results
-        self._save_result(train_uid, description, start_time, fit, loss, accuracy, early_stopping)
+        self._save_result(train_uid, description, start_time, fit, loss, accuracy, weights_path)
 
-    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, early_stopping):
+    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, weights_path):
         if os.path.isfile(self.train_results_path):
             train_results = utils.json_utils.load(self.train_results_path)
         else:
             train_results = {
                 "model": self.__class__.__name__,
-                "dataset": self.dataset_name,
+                "dataset": os.path.dirname(self.out_folder),
                 "input_shape": self.input_shape,
                 "training_sessions": []
             }
@@ -173,33 +170,11 @@ class CAE:
                 "batch_size": fit.params["batch_size"],
                 "epochs": fit.params["epochs"]
             },
-            "best_checkpoint_path": self.weights_path,
-            "early_stopping": {
-                "monitor": early_stopping.monitor,
-                "min_delta": early_stopping.min_delta,
-                "patience": early_stopping.patience
-            }
+            "weights_path": weights_path
         })
-
         utils.json_utils.dump(train_results, self.train_results_path)
 
-    def load_weights(self, mode="last"):
-        train_results = utils.json_utils.load(self.train_results_path)
-        train_session = train_results["training_sessions"]
-
-        if mode == "last":
-            weights_file_path = train_session[-1]["best_checkpoint_path"]
-        elif mode == "min_loss":
-            results_losses = [result["evaluation"]["loss"] for result in train_session]
-            min_loss_index = np.argmin(results_losses)
-            weights_file_path = train_session[min_loss_index]["best_checkpoint_path"]
-        elif mode == "max_acc":
-            results_accs = [result["evaluation"]["acc"] for result in train_session]
-            max_acc_index = np.argmax(results_accs)
-            weights_file_path = train_session[max_acc_index]["best_checkpoint_path"]
-        else:
-            raise Exception("'{}' mode not implemented.".format(mode))
-
+    def load_weights(self, weights_file_path):
         if not os.path.isfile(weights_file_path):
             raise Exception("weights file '{}' not found.".format(weights_file_path))
 

@@ -6,13 +6,15 @@ import utils
 import traceback
 import numpy as np
 import pathlib
-from tensorflow.contrib.keras import optimizers, losses
+import skimage
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import normalize
 from matplotlib import image as mpimg
+from tf_imports import optimizers, losses
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist10k")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
@@ -26,8 +28,8 @@ def main():
         optimizers.Adadelta(clipnorm=5.),  # 1
         optimizers.Adagrad(clipnorm=5.),  # 2
         optimizers.Adamax(clipnorm=5.),  # 3
-        optimizers.SGD(clipnorm=5.)  # 4
-    ])  # [0:1]
+        optimizers.SGD(clipnorm=5.),  # 4
+    ])
 
     loss_options = ([
         losses.binary_crossentropy,  # 0
@@ -39,13 +41,13 @@ def main():
         losses.mean_absolute_error,  # 6
         losses.mean_squared_logarithmic_error,  # 7
         losses.mean_absolute_percentage_error  # 8
-    ])  # [6:9]
+    ])
 
     batch_size_options = ([
         32,
         64,
         128
-    ])  # [:]
+    ])
 
     args = parser.parse_args()
 
@@ -57,6 +59,7 @@ def main():
     for meta_index, meta_entry in enumerate(dataset_meta):
         img_file_path = str(pathlib.Path(os.path.join(dataset_dir, meta_entry["image"])))
         img_array = mpimg.imread(img_file_path)
+        img_array = skimage.util.random_noise(img_array, mode="gaussian", var=0.02)
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
             if word2vec_captions.shape[0] > const.INPUT_SHAPE[0]:
@@ -72,7 +75,12 @@ def main():
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset, args.use_tpu)
+    for x in x_train:
+        noise = np.random.normal(loc=0, scale=0.03, size=x.shape)
+        x += noise
+
+    out_folder = "tmp/train/cae/{}".format(args.dataset)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]

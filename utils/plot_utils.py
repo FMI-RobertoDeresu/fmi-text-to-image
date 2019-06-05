@@ -8,7 +8,7 @@ def plot_image(img):
     plt.show()
 
 
-def plot_multiple_images(imgs, title=None, labels=None):
+def plot_multiple_images(imgs, title=None, labels=None, save_path=None):
     n_imgs = len(imgs)
     n_rows = int(np.round(np.sqrt(n_imgs)))
     n_cols = int(np.ceil(n_imgs / n_rows))
@@ -27,4 +27,9 @@ def plot_multiple_images(imgs, title=None, labels=None):
 
     plt.tight_layout(True)
     plt.title(title)
+
+    figure = plt.figure()
     plt.show()
+
+    if save_path is not None:
+        figure.savefig(save_path)

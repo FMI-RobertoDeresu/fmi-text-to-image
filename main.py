@@ -5,7 +5,10 @@ import nltk
 import argparse
 import tensorflow as tf
 import time
+import numpy as np
 import subprocess
+import skimage
+import matplotlib.pyplot as plt
 from tensorflow.python.client import device_lib
 
 parser = argparse.ArgumentParser()
@@ -13,12 +16,14 @@ parser.add_argument("-action", help="action to execute", default="main")
 
 
 def main():
-    subprocess.call(["python", "train.py", "-model", "test1", "-dataset", "test2", "-batch-size-index", "3"])
+    noise_image()
+    # replace()
+    # subprocess.call(["python", "train.py", "-model", "test1", "-dataset", "test2", "-batch-size-index", "3"])
 
 
 def test_cae():
     from models import CAE
-    cae = CAE((30, 300, 1), "")
+    cae = CAE((30, 300, 1), "", False)
 
 
 def max_words_per_caption():
@@ -95,6 +100,50 @@ def get_available_gpus():
     for index, device in enumerate(local_device_protos):
         print("\nDevice {}:".format(index))
         print(device)
+
+
+def replace():
+    results_path = pathlib.Path("./tmp/train/cae/mnist10k/results.json")
+    train_results = utils.json_utils.load(results_path)
+
+    train_sessions = train_results["training_sessions"]
+    for train_session in train_sessions:
+        train_session["weights_path"] = train_session["best_checkpoint_path"].format(
+            out_folder=train_session["description"]) + ".data-00000-of-00001"
+        train_session.pop("best_checkpoint_path")
+        train_session.pop("early_stopping")
+
+    train_results["training_sessions"] = train_sessions
+    utils.json_utils.dump(train_results, results_path)
+
+
+def noise_image():
+    img_path = "https://i.guim.co.uk/img/media/4ddba561156645952502f7241bd1a64abd0e48a3/0_1251_3712_2225/master/3712.jpg?width=1920&quality=85&auto=format&fit=max&s=1280341b186f8352416517fc997cd7da"
+    img = skimage.io.imread(img_path) / 255.0
+
+    def plotnoise(img, mode, r, c, i, var=0.01):
+        plt.subplot(r, c, i)
+        if mode is not None:
+            # gimg = skimage.util.random_noise(img, mode=mode, var=var)
+            gimg = np.random.normal(loc=0, scale=0.1, size=img.shape) + img
+            plt.imshow(gimg)
+        else:
+            plt.imshow(img)
+        plt.title(mode)
+        plt.axis("off")
+
+    plt.figure(figsize=(18, 24))
+    r = 4
+    c = 2
+    plotnoise(img, "gaussian", r, c, 1, 0.01)
+    # plotnoise(img, "localvar", r, c, 2)
+    # plotnoise(img, "poisson", r, c, 3)
+    # plotnoise(img, "salt", r, c, 4)
+    # plotnoise(img, "pepper", r, c, 5)
+    # plotnoise(img, "s&p", r, c, 6)
+    # plotnoise(img, "speckle", r, c, 7)
+    plotnoise(img, None, r, c, 8)
+    plt.show()
 
 
 if __name__ == '__main__':
