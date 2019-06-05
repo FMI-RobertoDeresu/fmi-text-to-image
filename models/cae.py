@@ -15,7 +15,7 @@ class CAE:
         self.print_model_summary = False
 
         self.train_results_path = str(Path("{}/results.json".format(out_folder)))
-        self.weights_path = str(Path("{}/weights/{{weights_name}}.hdf5".format(out_folder)))
+        self.weights_path = str(Path("{}/weights/{{weights_name}}.h5".format(out_folder)))
         self.tensor_board_log_dir = str(Path('{}/tensorboard/{{folder_name}}'.format(out_folder)))
 
         self._create_model(input_shape, use_tpu)

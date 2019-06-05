@@ -5,7 +5,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 

@@ -58,7 +58,6 @@ def main():
     for meta_index, meta_entry in enumerate(dataset_meta):
         img_file_path = str(pathlib.Path(os.path.join(dataset_dir, meta_entry["image"])))
         img_array = mpimg.imread(img_file_path)
-        img_array = skimage.util.random_noise(img_array, mode="gaussian", var=0.02)
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
             if word2vec_captions.shape[0] > const.INPUT_SHAPE[0]:
@@ -73,10 +72,9 @@ def main():
     x, y = tuple(zip(*data))
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
-
-    for x in x_train:
-        noise = np.random.normal(loc=0, scale=0.03, size=x.shape)
-        x += noise
+    
+    noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
+    x_train += noise
 
     out_folder = "tmp/train/cae/{}".format(args.dataset)
     model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu)
