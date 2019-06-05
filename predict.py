@@ -10,7 +10,7 @@ from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist10k")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-weights", help="all or last", default="all")
 
 
@@ -29,7 +29,7 @@ def main():
 
     word2vec_captions = np.array(word2vec.get_embeddings_remote(captions))
 
-    save_path_template = "tmp/out/{}_{{}}.jpg".format(int(time.time()))
+    save_path_template = "tmp/out/{}_{{}}.png".format(int(time.time()))
     pathlib.Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
 
     word2vec_captions_temp = []
@@ -54,12 +54,13 @@ def main():
         model.load_weights(train_session["weights_path"])
         images = model.predict(x_predict=word2vec_captions)
 
-        for caption, img in list(zip(captions, images)):
-            save_path = save_path_template.format(caption.replace(" ", "_"))
-            mpimg.imsave(save_path, img)
+        # for caption, img in list(zip(captions, images)):
+        #     save_path = save_path_template.format(caption.replace(" ", "_"))
+        #     mpimg.imsave(save_path, img)
 
-        save_path = save_path_template.format(train_session["description"])
-        utils.plot_utils.plot_multiple_images(images, title=model.identifier, labels=captions, save_path=save_path)
+        desc = train_session["description"]
+        save_path = save_path_template.format(desc)
+        utils.plot_utils.plot_multiple_images(images, title=desc, labels=captions, save_path=save_path)
 
 
 if __name__ == "__main__":

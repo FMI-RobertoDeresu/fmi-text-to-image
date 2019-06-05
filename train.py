@@ -8,7 +8,6 @@ import numpy as np
 import pathlib
 import skimage
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import normalize
 from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
 
