@@ -1,99 +1,86 @@
 import os
-import pathlib
 import utils
-import numpy as np
 import time
+import tensorflow as tf
+from pathlib import Path
 from datetime import datetime
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, GaussianNoise, Conv2DTranspose
-from keras.models import Model
-from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
-from keras import optimizers, losses
+from tf_imports import Model, Input, Conv2D, MaxPooling2D, Conv2DTranspose
+from tf_imports import TensorBoard, ModelCheckpoint, EarlyStopping, optimizers
 
 
 class CAE:
-    def __init__(self, input_shape, dataset_name):
+    def __init__(self, input_shape, out_folder, use_tpu):
         self.input_shape = input_shape
-        self.dataset_name = dataset_name
+        self.out_folder = out_folder
         self.print_model_summary = False
 
-        self.train_results_path = str(pathlib.Path("tmp/train/cae/{}/results.json".format(dataset_name)))
-        self.weights_path = str(pathlib.Path("tmp/train/cae/{}/weights/{{out_folder}}.hdf5".format(dataset_name)))
-        self.tensor_board_log_dir = str(pathlib.Path('tmp/tensorboard/cae/{}/{{out_folder}}'.format(dataset_name)))
+        self.train_results_path = str(Path("{}/results.json".format(out_folder)))
+        self.weights_path = str(Path("{}/weights/{{weights_name}}.h5".format(out_folder)))
+        self.tensor_board_log_dir = str(Path('{}/tensorboard/{{folder_name}}'.format(out_folder)))
 
-        self._create_model(input_shape)
+        self._create_model(input_shape, use_tpu)
 
-    def _create_model(self, input_shape):
+    def _create_model(self, input_shape, use_tpu):
         # N, M, _ = input_shape
-
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
 
         # noise
-        #input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
+        # input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
 
         # encoder
-        encoder = Conv2D(2, (3, 3), activation='relu', padding='same')(input_layer)  # (N, M, 2)
+        encoder = Conv2D(2, (3, 3), padding='same', activation='relu')(input_layer)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
-        encoder = Conv2D(4, (3, 3), activation='relu', padding='same')(encoder)  # (N/2 , M/2, 4)
+        encoder = Conv2D(4, (3, 3), padding='same', activation='relu')(encoder)  # (N/2 , M/2, 4)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/4 , M/4, 4)
 
-        encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)  # (N/4 , M/4, 8)
+        encoder = Conv2D(8, (3, 3), padding='same', activation='relu')(encoder)  # (N/4 , M/4, 8)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/8 , M/8, 8)
 
-        encoder = Conv2D(16, (3, 3), activation='relu', padding='same')(encoder)  # (N/8 , M/8, 16)
+        encoder = Conv2D(16, (3, 3), padding='same', activation='relu')(encoder)  # (N/8 , M/8, 16)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/16 , M/16, 16)
 
-        encoder = Conv2D(32, (3, 3), activation='relu', padding='same')(encoder)  # (N/16 , M/16, 32)
+        encoder = Conv2D(32, (3, 3), padding='same', activation='relu')(encoder)  # (N/16 , M/16, 32)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/32 , M/32, 32)
 
-        encoder = Conv2D(64, (3, 3), activation='relu', padding='same')(encoder)  # (N/32 , M/32, 64)
+        encoder = Conv2D(64, (3, 3), padding='same', activation='relu')(encoder)  # (N/32 , M/32, 64)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/64 , M/64, 64)
 
-        encoder = Conv2D(128, (3, 3), activation='relu', padding='same')(encoder)  # (N/64 , M/64, 128)
+        encoder = Conv2D(128, (3, 3), padding='same', activation='relu')(encoder)  # (N/64 , M/64, 128)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/128 , M/128, 128)
 
-        encoder = Conv2D(256, (3, 3), activation='relu', padding='same')(encoder)  # (N/128 , M/128, 256)
+        encoder = Conv2D(256, (3, 3), padding='same', activation='relu')(encoder)  # (N/128 , M/128, 256)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/256 , M/256, 256)
 
-        encoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)  # (N/256 , M/256, 512)
+        encoder = Conv2D(512, (3, 3), padding='same', activation='relu')(encoder)  # (N/256 , M/256, 512)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
-        # Shape here must be: (1, 1, 512)
+
+        # IMPORTANT: Shape here must be: (1, 1, 512)
 
         # decoder
-        decoder = Conv2D(512, (3, 3), activation='relu', padding='same')(encoder)  # (1 , 1, 512)
-        decoder = UpSampling2D((2, 2))(decoder)  # (2, 2, 512)
-
-        decoder = Conv2D(256, kernel_size=(3, 3), activation='relu', padding='same')(decoder)  # (2, 2, 256)
-        decoder = UpSampling2D((2, 2))(decoder)  # (4, 4, 256)
-
-        decoder = Conv2D(128, (3, 3), activation='relu', padding='same')(decoder)  # (4, 4, 128)
-        decoder = UpSampling2D((2, 2))(decoder)  # (8, 8, 128)
-
-        decoder = Conv2D(64, (3, 3), activation='relu', padding='same')(decoder)  # (8, 8, 64)
-        decoder = UpSampling2D((2, 2))(decoder)  # (16, 16, 64)
-
-        decoder = Conv2D(32, (3, 3), activation='relu', padding='same')(decoder)  # (16, 16, 32)
-        decoder = UpSampling2D((2, 2))(decoder)  # (32, 32, 32)
-
-        decoder = Conv2D(16, (3, 3), activation='relu', padding='same')(decoder)  # (32, 32, 316)
-        decoder = UpSampling2D((2, 2))(decoder)  # (64, 64, 16)
-
-        decoder = Conv2D(8, (3, 3), activation='relu', padding='same')(decoder)  # (64, 64, 8)
-        decoder = UpSampling2D((2, 2))(decoder)  # (128, 128, 8)
-
-        decoder = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(decoder)  # (128, 128,  3)
+        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='relu')(encoder)  # (2, 2, 512)
+        decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='relu')(decoder)  # (4, 4, 256)
+        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
+        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
+        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='relu')(decoder)  # (32, 32, 32)
+        decoder = Conv2DTranspose(16, 3, strides=2, padding='same', activation='relu')(decoder)  # (64, 64, 16)
+        decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
+        decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128,  3)
 
         self.model = Model(input_layer, decoder)
-
         if self.print_model_summary:
             self.model.summary()
 
-    def train(self, x_train, y_train, x_test, y_test,
-              optimizer=optimizers.Adam(),
-              loss=losses.categorical_crossentropy,
-              batch_size=128):
+        if use_tpu:
+            self.model = tf.contrib.tpu.keras_to_tpu_model(
+                self.model,
+                strategy=tf.contrib.tpu.TPUDistributionStrategy(
+                    tf.contrib.cluster_resolver.TPUClusterResolver(tpu='demo-tpu')
+                )
+            )
 
+    def train(self, x_train, y_train, x_test, y_test, optimizer, loss, batch_size):
         train_uid = utils.uid()
         description = "{train_uid} opt={optimizer} loss={loss} batch={batch_size}".format(
             train_uid=train_uid,
@@ -102,15 +89,15 @@ class CAE:
             batch_size=batch_size)
 
         print("Training: {}".format(description))
-        weights_path = pathlib.Path(self.weights_path.format(out_folder=description))
-        weights_path.parent.mkdir(parents=True, exist_ok=True)
+        weights_path = str(Path(self.weights_path.format(weights_name=description)))
+        Path(weights_path).parent.mkdir(parents=True, exist_ok=True)
 
-        tensor_board_log_dir = pathlib.Path(self.tensor_board_log_dir.format(out_folder=description))
-        tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
+        tensor_board_log_dir = str(Path(self.tensor_board_log_dir.format(folder_name=description)))
+        Path(tensor_board_log_dir).mkdir(parents=True, exist_ok=True)
 
         # callbacks
         checkpoint_weights = ModelCheckpoint(
-            filepath=str(weights_path),
+            filepath=weights_path,
             verbose=0,
             monitor='val_loss',
             save_best_only=True,
@@ -125,11 +112,12 @@ class CAE:
             mode='min',
             restore_best_weights=True)
 
-        tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
+        tensor_board = TensorBoard(log_dir=tensor_board_log_dir)
 
-        callbacks = [checkpoint_weights, tensor_board, early_stopping]
+        callbacks = [early_stopping]
 
         # compile
+        optimizer = optimizers.Adam(clipnorm=5.)
         self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         # fit
@@ -145,20 +133,22 @@ class CAE:
             callbacks=callbacks,
             validation_split=0.2)
 
+        self.model.save_weights(weights_path)
+
         # evaluate
         evaluate = self.model.evaluate(x=x_test, y=y_test, verbose=0)
         loss, accuracy = evaluate[:2]
 
         # save results
-        self._save_result(train_uid, description, start_time, fit, loss, accuracy, early_stopping)
+        self._save_result(train_uid, description, start_time, fit, loss, accuracy, weights_path)
 
-    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, early_stopping):
+    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, weights_path):
         if os.path.isfile(self.train_results_path):
             train_results = utils.json_utils.load(self.train_results_path)
         else:
             train_results = {
                 "model": self.__class__.__name__,
-                "dataset": self.dataset_name,
+                "dataset": os.path.dirname(self.out_folder),
                 "input_shape": self.input_shape,
                 "training_sessions": []
             }
@@ -175,40 +165,18 @@ class CAE:
                 "loss": fit.model.loss_functions[0].__name__
             },
             "evaluation": {
-                "loss": loss,
-                "acc": accuracy,
+                "loss": str(loss),
+                "acc": str(accuracy),
             },
             "fit_params": {
                 "batch_size": fit.params["batch_size"],
                 "epochs": fit.params["epochs"]
             },
-            "best_checkpoint_path": self.weights_path,
-            "early_stopping": {
-                "monitor": early_stopping.monitor,
-                "min_delta": early_stopping.min_delta,
-                "patience": early_stopping.patience
-            }
+            "weights_path": weights_path
         })
-
         utils.json_utils.dump(train_results, self.train_results_path)
 
-    def load_weights(self, mode="last"):
-        train_results = utils.json_utils.load(self.train_results_path)
-        train_session = train_results["training_sessions"]
-
-        if mode == "last":
-            weights_file_path = train_session[-1]["best_checkpoint_path"]
-        elif mode == "min_loss":
-            results_losses = [result["evaluation"]["loss"] for result in train_session]
-            min_loss_index = np.argmin(results_losses)
-            weights_file_path = train_session[min_loss_index]["best_checkpoint_path"]
-        elif mode == "max_acc":
-            results_accs = [result["evaluation"]["acc"] for result in train_session]
-            max_acc_index = np.argmax(results_accs)
-            weights_file_path = train_session[max_acc_index]["best_checkpoint_path"]
-        else:
-            raise Exception("'{}' mode not implemented.".format(mode))
-
+    def load_weights(self, weights_file_path):
         if not os.path.isfile(weights_file_path):
             raise Exception("weights file '{}' not found.".format(weights_file_path))
 

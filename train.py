@@ -3,20 +3,52 @@ import argparse
 import const
 import models
 import utils
-import numpy as np
-import itertools
 import traceback
+import numpy as np
+import pathlib
+import skimage
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
-
-from keras import optimizers, losses
+from tf_imports import optimizers, losses
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist10k")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
+parser.add_argument("-loss-index", help="loss index", type=int, default=0)
+parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
+
+parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 
 
 def main():
+    optimizer_options = ([
+        optimizers.Adam(clipnorm=5.),  # 0
+        optimizers.Adadelta(clipnorm=5.),  # 1
+        optimizers.Adagrad(clipnorm=5.),  # 2
+        optimizers.Adamax(clipnorm=5.),  # 3
+        optimizers.SGD(clipnorm=5.),  # 4
+    ])
+
+    loss_options = ([
+        losses.binary_crossentropy,  # 0
+        losses.categorical_crossentropy,  # 1
+        losses.categorical_hinge,  # 2
+        losses.squared_hinge,  # 3
+        losses.kullback_leibler_divergence,  # 4
+        losses.mean_squared_error,  # 5
+        losses.mean_absolute_error,  # 6
+        losses.mean_squared_logarithmic_error,  # 7
+        losses.mean_absolute_percentage_error  # 8
+    ])
+
+    batch_size_options = ([
+        32,
+        64,
+        128,
+        256
+    ])
+
     args = parser.parse_args()
 
     dataset_dir = const.DATASETS_PATH[args.dataset]
@@ -25,7 +57,7 @@ def main():
 
     data = []
     for meta_index, meta_entry in enumerate(dataset_meta):
-        img_file_path = os.path.join(dataset_dir, meta_entry["image"])
+        img_file_path = str(pathlib.Path(os.path.join(dataset_dir, meta_entry["image"])))
         img_array = mpimg.imread(img_file_path)
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
@@ -41,43 +73,23 @@ def main():
     x, y = tuple(zip(*data))
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
+    
+    noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
+    x_train += noise
 
-    optimizers_options = ([
-        optimizers.Adam(clipnorm=5.),
-        optimizers.Adadelta(),
-        optimizers.Adagrad(),
-        optimizers.Adamax(),
-        optimizers.SGD()
-    ])#[0:1]
+    out_folder = "tmp/train/cae/{}".format(args.dataset)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu)
+    optimizer = optimizer_options[args.optimizer_index]
+    loss = loss_options[args.loss_index]
+    batch_size = batch_size_options[args.batch_size_index]
 
-    losses_options = ([
-        losses.binary_crossentropy,
-        losses.categorical_crossentropy,
-        losses.sparse_categorical_crossentropy,
-        losses.categorical_hinge,
-        losses.squared_hinge,
-        losses.kullback_leibler_divergence,
-        losses.mean_squared_error,
-        losses.mean_absolute_error,
-        losses.mean_squared_logarithmic_error,
-        losses.mean_absolute_percentage_error
-    ])#[1:2]
+    desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
+    print("\n\n" + desc)
 
-    batch_size_options = ([
-        32,
-        64,
-        128
-    ])#[0:1]
-
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
-    for optimizer, loss, batch_size in itertools.product(optimizers_options, losses_options, batch_size_options):
-        try:
-            desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
-            print(desc)
-            model.train(x_train, y_train, x_test, y_test, optimizer=optimizer, loss=loss, batch_size=batch_size)
-        except Exception as exception:
-            print("Error for {}".format(desc))
-            traceback.print_exc()
+    try:
+        model.train(x_train, y_train, x_test, y_test, optimizer=optimizer, loss=loss, batch_size=batch_size)
+    except Exception:
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

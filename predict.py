@@ -10,7 +10,8 @@ from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+parser.add_argument("-weights", help="all or last", default="all")
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
 
     word2vec_captions = np.array(word2vec.get_embeddings_remote(captions))
 
-    save_path_template = "tmp/out/{}_{{}}.jpg".format(int(time.time()))
+    save_path_template = "tmp/out/{}_{{}}.png".format(int(time.time()))
     pathlib.Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
 
     word2vec_captions_temp = []
@@ -40,16 +41,26 @@ def main():
 
     word2vec_captions = np.expand_dims(np.array(word2vec_captions_temp), 4)
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.dataset)
-    model.load_weights()
+    model_out_folder = "tmp/train/cae/{}".format(args.dataset)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, model_out_folder, False)
 
-    imgs = model.predict(x_predict=word2vec_captions)
+    train_results = utils.json_utils.load(model.train_results_path)
+    train_sessions = train_results["training_sessions"]
 
-    for caption, img in list(zip(captions, imgs)):
-        save_path = save_path_template.format(caption.replace(" ", "_"))
-        mpimg.imsave(save_path, img)
+    if args.weights == "last":
+        train_sessions = train_sessions[-1:]
 
-    utils.plot_utils.plot_multiple_images(imgs, title=model.identifier, labels=captions)
+    for train_session in train_sessions:
+        model.load_weights(train_session["weights_path"])
+        images = model.predict(x_predict=word2vec_captions)
+
+        # for caption, img in list(zip(captions, images)):
+        #     save_path = save_path_template.format(caption.replace(" ", "_"))
+        #     mpimg.imsave(save_path, img)
+
+        desc = train_session["description"]
+        save_path = save_path_template.format(desc)
+        utils.plot_utils.plot_multiple_images(images, title=desc, labels=captions, save_path=save_path)
 
 
 if __name__ == "__main__":
