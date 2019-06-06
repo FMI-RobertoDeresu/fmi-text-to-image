@@ -6,7 +6,6 @@ import utils
 import traceback
 import numpy as np
 import pathlib
-import skimage
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
@@ -17,36 +16,25 @@ parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
-
+parser.add_argument("-use-dense-layers", help="use dense layer", action="store_true")
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 
 
 def main():
     optimizer_options = ([
         optimizers.Adam(clipnorm=5.),  # 0
-        optimizers.Adadelta(clipnorm=5.),  # 1
-        optimizers.Adagrad(clipnorm=5.),  # 2
-        optimizers.Adamax(clipnorm=5.),  # 3
-        optimizers.SGD(clipnorm=5.),  # 4
+        optimizers.SGD(clipnorm=5.),  # 1
+        optimizers.SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5.),  # 2
     ])
 
     loss_options = ([
         losses.binary_crossentropy,  # 0
-        losses.categorical_crossentropy,  # 1
-        losses.categorical_hinge,  # 2
-        losses.squared_hinge,  # 3
-        losses.kullback_leibler_divergence,  # 4
-        losses.mean_squared_error,  # 5
-        losses.mean_absolute_error,  # 6
-        losses.mean_squared_logarithmic_error,  # 7
-        losses.mean_absolute_percentage_error  # 8
+        losses.mean_squared_error,  # 2
     ])
 
     batch_size_options = ([
-        32,
-        64,
-        128,
-        256
+        64,  # 0
+        128  # 1
     ])
 
     args = parser.parse_args()
@@ -73,12 +61,12 @@ def main():
     x, y = tuple(zip(*data))
     x, y = (np.expand_dims(x, 4), np.array(y))
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
-    
+
     noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
     x_train += noise
 
     out_folder = "tmp/train/cae/{}".format(args.dataset)
-    model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu, args.use_dense_layers)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]

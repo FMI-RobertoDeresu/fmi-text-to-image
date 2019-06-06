@@ -4,12 +4,12 @@ import time
 import tensorflow as tf
 from pathlib import Path
 from datetime import datetime
-from tf_imports import Model, Input, Conv2D, MaxPooling2D, Conv2DTranspose
+from tf_imports import Model, Input, Conv2D, MaxPooling2D, Conv2DTranspose, Dropout, Flatten, Dense, Reshape
 from tf_imports import TensorBoard, ModelCheckpoint, EarlyStopping, optimizers
 
 
 class CAE:
-    def __init__(self, input_shape, out_folder, use_tpu):
+    def __init__(self, input_shape, out_folder, use_tpu, use_dense_layers):
         self.input_shape = input_shape
         self.out_folder = out_folder
         self.print_model_summary = False
@@ -18,18 +18,16 @@ class CAE:
         self.weights_path = str(Path("{}/weights/{{weights_name}}.h5".format(out_folder)))
         self.tensor_board_log_dir = str(Path('{}/tensorboard/{{folder_name}}'.format(out_folder)))
 
-        self._create_model(input_shape, use_tpu)
+        self._create_model(input_shape, use_tpu, use_dense_layers)
 
-    def _create_model(self, input_shape, use_tpu):
+    def _create_model(self, input_shape, use_tpu, use_dense_layers):
         # N, M, _ = input_shape
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
-
-        # noise
-        # input_layer = GaussianNoise(0.1)(input_layer)  # (N, M, 1)
+        input_drop_layer = Dropout(0.2)(input_layer)  # (N, M, 1)
 
         # encoder
-        encoder = Conv2D(2, (3, 3), padding='same', activation='relu')(input_layer)  # (N, M, 2)
+        encoder = Conv2D(2, (3, 3), padding='same', activation='relu')(input_drop_layer)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
         encoder = Conv2D(4, (3, 3), padding='same', activation='relu')(encoder)  # (N/2 , M/2, 4)
@@ -56,10 +54,16 @@ class CAE:
         encoder = Conv2D(512, (3, 3), padding='same', activation='relu')(encoder)  # (N/256 , M/256, 512)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
 
-        # IMPORTANT: Shape here must be: (1, 1, 512)
+        encoder = Flatten()(encoder)  # (512)
+
+        if use_dense_layers:
+            encoder = Dense(512)(encoder)  # (512)
+            encoder = Dropout(0.2)(encoder)  # (512)
+            encoder = Dense(512)(encoder)  # (512)
 
         # decoder
-        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='relu')(encoder)  # (2, 2, 512)
+        decoder = Reshape((1, 1, 512))(encoder)  # (1, 1, 512)
+        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='relu')(decoder)  # (2, 2, 512)
         decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='relu')(decoder)  # (4, 4, 256)
         decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
         decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
@@ -160,18 +164,8 @@ class CAE:
             "end_time": str(datetime.now()),
             "elapsed_time": str(datetime.fromtimestamp(time.time()) - datetime.fromtimestamp(start_time)),
             "trained_epochs": len(fit.epoch),
-            "model": {
-                "optimizer": fit.model.optimizer.__class__.__name__,
-                "loss": fit.model.loss_functions[0].__name__
-            },
-            "evaluation": {
-                "loss": str(loss),
-                "acc": str(accuracy),
-            },
-            "fit_params": {
-                "batch_size": fit.params["batch_size"],
-                "epochs": fit.params["epochs"]
-            },
+            "loss": str(loss),
+            "acc": str(accuracy),
             "weights_path": weights_path
         })
         utils.json_utils.dump(train_results, self.train_results_path)
