@@ -15,7 +15,7 @@ def main():
 
     optimizer_indexes = range(4)
     loss_indexes = range(2)
-    batch_size_indexes = range(2)
+    batch_size_indexes = range(5)
 
     for optimizer, loss, batch_size, use_dense_layers in itertools.product(optimizer_indexes, loss_indexes,
                                                                            batch_size_indexes, [True, False]):
