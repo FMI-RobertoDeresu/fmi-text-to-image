@@ -116,4 +116,5 @@ dmypy.json
 tmp/
 datasets/
 models/data/
+.idea
 .idea/
