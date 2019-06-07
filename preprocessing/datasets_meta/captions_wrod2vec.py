@@ -1,15 +1,14 @@
-import os
 import utils
-import pathlib
 import sys
 import pickle
 import time
+from pathlib import Path
 from models.word2vec import Word2Vec
 
 
 def save_word2vec_captions(word2vec, dataset_name):
-    dataset_path = pathlib.Path("../../datasets/{}".format(dataset_name))
-    meta_file_path = os.path.join(dataset_path, "meta.json")
+    dataset_path = Path("../../datasets/{}".format(dataset_name))
+    meta_file_path = Path(dataset_path, "meta.json")
     meta = utils.json_utils.load(meta_file_path)
 
     meta_captions = []
@@ -28,8 +27,8 @@ def save_word2vec_captions(word2vec, dataset_name):
     for index, caption_word2vec in zip(indexes, captions_word2vec):
         word2vec_captions[index].append(caption_word2vec)
 
-    word2vec_captions_bin_file_path = os.path.join(dataset_path, "word2vec-captions.bin")
-    pathlib.Path(word2vec_captions_bin_file_path).parent.mkdir(parents=True, exist_ok=True)
+    word2vec_captions_bin_file_path = Path(dataset_path, "word2vec-captions.bin")
+    word2vec_captions_bin_file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(word2vec_captions_bin_file_path, 'wb') as f2:
         pickle.dump(word2vec_captions, f2)
 

@@ -1,7 +1,7 @@
 import pickle
 
 
-def load(file_name):
-    with open(file_name, "rb") as f:
+def load(file_path):
+    with open(file_path, "rb") as f:
         json_data = pickle.load(f)
     return json_data

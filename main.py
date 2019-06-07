@@ -1,14 +1,13 @@
-import pathlib
-import os
 import utils
 import nltk
 import argparse
 import tensorflow as tf
 import time
+import re
 import numpy as np
-import subprocess
 import skimage
 import matplotlib.pyplot as plt
+from pathlib import Path
 from tensorflow.python.client import device_lib
 
 parser = argparse.ArgumentParser()
@@ -17,14 +16,24 @@ parser.add_argument("-action", help="action to execute", default="main")
 
 def main():
     noise_image()
-    # replace()
-    # subprocess.call(["python", "train.py", "-model", "test1", "-dataset", "test2", "-batch-size-index", "3"])
 
 
-def test_cae():
-    from models import CAE
-    cae = CAE((30, 300, 1), "", False)
+def captions_lengths():
+    datasets_paths = Path("datasets").glob(pattern="*")
+    for dataset_path in datasets_paths:
+        meta_file_path = Path(dataset_path, "meta.json")
+        meta = utils.json_utils.load(meta_file_path)
 
+        max_length = 0
+        for meta_entry in meta:
+            for caption in meta_entry["captions"]:
+                try:
+                    words = re.findall(r"\w+", caption)
+                    max_length = max(max_length, len(words))
+                except:
+                    print(meta_entry["image"])
+
+        print("{} - {}".format(dataset_path.name, max_length))
 
 def max_words_per_caption():
     datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
@@ -33,8 +42,7 @@ def max_words_per_caption():
     print(stopwords)
 
     for dataset_name in datasets_names[:]:
-        dataset_path = pathlib.Path("datasets/{}".format(dataset_name))
-        meta_file_path = os.path.join(dataset_path, "meta.json")
+        meta_file_path = Path("datasets/{}".format(dataset_name), "meta.json")
         meta = utils.json_utils.load(meta_file_path)
 
         max_n_words = 0
@@ -103,7 +111,7 @@ def get_available_gpus():
 
 
 def replace():
-    results_path = pathlib.Path("./tmp/train/cae/mnist10k/results.json")
+    results_path = Path("./tmp/train/cae/mnist10k/results.json")
     train_results = utils.json_utils.load(results_path)
 
     train_sessions = train_results["training_sessions"]
@@ -118,10 +126,11 @@ def replace():
 
 
 def noise_image():
-    img_path = "https://i.guim.co.uk/img/media/4ddba561156645952502f7241bd1a64abd0e48a3/0_1251_3712_2225/master/3712.jpg?width=1920&quality=85&auto=format&fit=max&s=1280341b186f8352416517fc997cd7da"
-    img = skimage.io.imread(img_path) / 255.0
+    img_url = "https://i.guim.co.uk/img/media/4ddba561156645952502f7241bd1a64abd0e48a3/0_1251_3712_2225/master/" \
+              "3712.jpg?width=1920&quality=85&auto=format&fit=max&s=1280341b186f8352416517fc997cd7da"
+    img = skimage.io.imread(img_url) / 255.0
 
-    def plotnoise(img, mode, r, c, i, var=0.01):
+    def plot_noise(img, mode, r, c, i, var=0.01):
         plt.subplot(r, c, i)
         if mode is not None:
             # gimg = skimage.util.random_noise(img, mode=mode, var=var)
@@ -135,14 +144,14 @@ def noise_image():
     plt.figure(figsize=(18, 24))
     r = 4
     c = 2
-    plotnoise(img, "gaussian", r, c, 1, 0.01)
-    # plotnoise(img, "localvar", r, c, 2)
-    # plotnoise(img, "poisson", r, c, 3)
-    # plotnoise(img, "salt", r, c, 4)
-    # plotnoise(img, "pepper", r, c, 5)
-    # plotnoise(img, "s&p", r, c, 6)
-    # plotnoise(img, "speckle", r, c, 7)
-    plotnoise(img, None, r, c, 8)
+    plot_noise(img, "gaussian", r, c, 1, 0.01)
+    # plot_noise(img, "localvar", r, c, 2)
+    # plot_noise(img, "poisson", r, c, 3)
+    # plot_noise(img, "salt", r, c, 4)
+    # plot_noise(img, "pepper", r, c, 5)
+    # plot_noise(img, "s&p", r, c, 6)
+    # plot_noise(img, "speckle", r, c, 7)
+    plot_noise(img, None, r, c, 8)
     plt.show()
 
 

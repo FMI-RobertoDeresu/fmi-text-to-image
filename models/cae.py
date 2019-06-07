@@ -1,26 +1,30 @@
-import os
 import utils
 import time
 import tensorflow as tf
 from pathlib import Path
 from datetime import datetime
 from tf_imports import Model, Input, Conv2D, MaxPooling2D, Conv2DTranspose, Dropout, Flatten, Dense, Reshape
-from tf_imports import TensorBoard, ModelCheckpoint, EarlyStopping, optimizers
+from tf_imports import TensorBoard, EarlyStopping
+from tf_imports import multi_gpu_model
 
 
 class CAE:
-    def __init__(self, input_shape, out_folder, use_tpu, use_dense_layers):
+    def __init__(self, input_shape, use_tpu=False, gpus=None, use_dense_layers=True):
+        if use_tpu and gpus > 0:
+            raise Exception("If tpus are used, gpus must be 0.")
+
+        if gpus is not None and gpus < 2:
+            raise Exception("If gpus is specified, then it must be and integer >= 2.")
+
         self.input_shape = input_shape
-        self.out_folder = out_folder
-        self.print_model_summary = False
+        self.optimizer = None
+        self.loss = None
+        self.model = self._create_model(input_shape, use_tpu, gpus, use_dense_layers, False)
+        self.model_compiled = False
 
-        self.train_results_path = str(Path("{}/results.json".format(out_folder)))
-        self.weights_path = str(Path("{}/weights/{{weights_name}}.h5".format(out_folder)))
-        self.tensor_board_log_dir = str(Path('{}/tensorboard/{{folder_name}}'.format(out_folder)))
 
-        self._create_model(input_shape, use_tpu, use_dense_layers)
-
-    def _create_model(self, input_shape, use_tpu, use_dense_layers):
+    @staticmethod
+    def _create_model(input_shape, use_tpu, gpus, use_dense_layers, print_model_summary):
         # N, M, _ = input_shape
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
@@ -72,42 +76,45 @@ class CAE:
         decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
         decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128,  3)
 
-        self.model = Model(input_layer, decoder)
-        if self.print_model_summary:
-            self.model.summary()
+        model = Model(input_layer, decoder)
+        if print_model_summary:
+            model.summary()
 
         if use_tpu:
-            self.model = tf.contrib.tpu.keras_to_tpu_model(
-                self.model,
+            model = tf.contrib.tpu.keras_to_tpu_model(
+                model,
                 strategy=tf.contrib.tpu.TPUDistributionStrategy(
                     tf.contrib.cluster_resolver.TPUClusterResolver(tpu='demo-tpu')
                 )
             )
 
-    def train(self, x_train, y_train, x_test, y_test, optimizer, loss, batch_size):
+        if (gpus or 0) > 2:
+            model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
+
+        return model
+
+    def compile(self, optimizer, loss):
+        if self.model_compiled:
+            raise Exception("The model was already compiled.")
+
+        self.optimizer = optimizer
+        self.loss = loss
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+        self.model_compiled = True
+
+    def train(self, x_train, y_train, x_test, y_test, batch_size, out_folder):
+        if not self.model_compiled:
+            raise Exception("The model must be compiled first.")
+
         train_uid = utils.uid()
         description = "{train_uid} opt={optimizer} loss={loss} batch={batch_size}".format(
             train_uid=train_uid,
-            optimizer=optimizer.__class__.__name__,
-            loss=loss.__name__,
+            optimizer=self.optimizer.__class__.__name__,
+            loss=self.loss.__name__,
             batch_size=batch_size)
-
         print("Training: {}".format(description))
-        weights_path = str(Path(self.weights_path.format(weights_name=description)))
-        Path(weights_path).parent.mkdir(parents=True, exist_ok=True)
-
-        tensor_board_log_dir = str(Path(self.tensor_board_log_dir.format(folder_name=description)))
-        Path(tensor_board_log_dir).mkdir(parents=True, exist_ok=True)
 
         # callbacks
-        checkpoint_weights = ModelCheckpoint(
-            filepath=weights_path,
-            verbose=0,
-            monitor='val_loss',
-            save_best_only=True,
-            save_weights_only=True,
-            mode='min')
-
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
@@ -116,13 +123,11 @@ class CAE:
             mode='min',
             restore_best_weights=True)
 
-        tensor_board = TensorBoard(log_dir=tensor_board_log_dir)
+        # tensor_board_log_dir = Path("{}/tensorboard/{}".format(out_folder, description))
+        # tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
+        # tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
 
         callbacks = [early_stopping]
-
-        # compile
-        optimizer = optimizers.Adam(clipnorm=5.)
-        self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
         # fit
         start_time = time.time()
@@ -137,22 +142,25 @@ class CAE:
             callbacks=callbacks,
             validation_split=0.2)
 
-        self.model.save_weights(weights_path)
+        # save
+        weights_path = Path("{}/weights/{}.h5".format(out_folder, description))
+        weights_path.parent.mkdir(parents=True, exist_ok=True)
+        self.model.save_weights(str(weights_path))
 
         # evaluate
         evaluate = self.model.evaluate(x=x_test, y=y_test, verbose=0)
         loss, accuracy = evaluate[:2]
 
         # save results
-        self._save_result(train_uid, description, start_time, fit, loss, accuracy, weights_path)
+        results_path = Path("{}/results.json".format(out_folder))
+        self._save_result(results_path, train_uid, description, start_time, fit, loss, accuracy, weights_path)
 
-    def _save_result(self, train_uid, description, start_time, fit, loss, accuracy, weights_path):
-        if os.path.isfile(self.train_results_path):
-            train_results = utils.json_utils.load(self.train_results_path)
+    def _save_result(self, path, train_uid, description, start_time, fit, loss, accuracy, weights_path):
+        if path.exists():
+            train_results = utils.json_utils.load(path)
         else:
             train_results = {
                 "model": self.__class__.__name__,
-                "dataset": os.path.dirname(self.out_folder),
                 "input_shape": self.input_shape,
                 "training_sessions": []
             }
@@ -160,18 +168,16 @@ class CAE:
         train_results["training_sessions"].append({
             "uid": train_uid,
             "description": description,
-            "start_time": str(datetime.fromtimestamp(start_time)),
-            "end_time": str(datetime.now()),
             "elapsed_time": str(datetime.fromtimestamp(time.time()) - datetime.fromtimestamp(start_time)),
             "trained_epochs": len(fit.epoch),
             "loss": str(loss),
             "acc": str(accuracy),
-            "weights_path": weights_path
+            "weights_path": weights_path.as_posix()
         })
-        utils.json_utils.dump(train_results, self.train_results_path)
+        utils.json_utils.dump(train_results, path)
 
     def load_weights(self, weights_file_path):
-        if not os.path.isfile(weights_file_path):
+        if not Path(weights_file_path).exists():
             raise Exception("weights file '{}' not found.".format(weights_file_path))
 
         self.model.load_weights(weights_file_path)

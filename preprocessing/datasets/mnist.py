@@ -1,12 +1,11 @@
 import tensorflow as tf
-import pathlib
 import numpy as np
-import os
 import time
-import json
+import utils
 from PIL import Image
+from pathlib import Path
 
-dataset_path = pathlib.Path("../../datasets/mnist/{}".format(int(time.time())))
+dataset_path = Path("../../datasets/mnist/{}".format(int(time.time())))
 dataset_path.mkdir(parents=True, exist_ok=True)
 
 letter_name = {
@@ -44,17 +43,16 @@ for i, index_list in enumerate(rnd_index_list):
     img = img.resize((128, 128), Image.ANTIALIAS)
 
     image_file_name = "img_{}_{}.png".format(str((i+1)).rjust(4, "0"), "_".join(labels))
-    image_file_path = os.path.join(dataset_path, "imgs", image_file_name)
-    pathlib.Path(image_file_path).parent.mkdir(parents=True, exist_ok=True)
-    img.save(image_file_path)
+    image_file_path = Path(dataset_path, "images", image_file_name)
+    image_file_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(str(image_file_path))
 
     meta.append({
-        "image": os.path.join("imgs", image_file_name),
+        "image": Path("images", image_file_name).as_posix(),
         "label": labels,
         "captions": [label_name]
     })
 
-meta_file_path = os.path.join(dataset_path, "meta.json")
-pathlib.Path(meta_file_path).parent.mkdir(parents=True, exist_ok=True)
-with open(meta_file_path, 'w+') as f:
-    json.dump(meta, f, indent=4)
+meta_file_path = Path(dataset_path, "meta.json")
+meta_file_path.parent.mkdir(parents=True, exist_ok=True)
+utils.json_utils.dump(meta, meta_file_path)

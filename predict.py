@@ -2,9 +2,9 @@ import argparse
 import models
 import numpy as np
 import utils
-import pathlib
 import time
 import const
+from pathlib import Path
 from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
@@ -33,7 +33,7 @@ def main():
         word2vec_captions = np.array(word2vec.get_embeddings(captions))
 
     save_path_template = "tmp/out/{}_{{}}.png".format(int(time.time()))
-    pathlib.Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
+    Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
 
     word2vec_captions_temp = []
     for index, word2vec_caption in enumerate(word2vec_captions):

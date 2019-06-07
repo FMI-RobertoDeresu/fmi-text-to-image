@@ -1,11 +1,10 @@
-import os
 import argparse
 import const
 import models
 import utils
 import traceback
 import numpy as np
-import pathlib
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
@@ -18,6 +17,7 @@ parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
 parser.add_argument("-use-dense-layers", help="use dense layer", action="store_true")
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
+parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 
 def main():
@@ -25,6 +25,7 @@ def main():
         optimizers.Adam(clipnorm=5.),  # 0
         optimizers.SGD(clipnorm=5.),  # 1
         optimizers.SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5.),  # 2
+        optimizers.RMSprop(clipnorm=5.),  # 3
     ])
 
     loss_options = ([
@@ -40,13 +41,13 @@ def main():
     args = parser.parse_args()
 
     dataset_dir = const.DATASETS_PATH[args.dataset]
-    dataset_meta = utils.json_utils.load(os.path.join(dataset_dir, "meta.json"))
-    dataset_word2vec_captions = np.array(utils.pickle_utils.load(os.path.join(dataset_dir, "word2vec-captions.bin")))
+    dataset_meta = utils.json_utils.load(Path(dataset_dir, "meta.json"))
+    dataset_word2vec_captions = np.array(utils.pickle_utils.load(Path(dataset_dir, "word2vec-captions.bin")))
 
     data = []
     for meta_index, meta_entry in enumerate(dataset_meta):
-        img_file_path = str(pathlib.Path(os.path.join(dataset_dir, meta_entry["image"])))
-        img_array = mpimg.imread(img_file_path)
+        img_file_path = Path(dataset_dir, meta_entry["image"])
+        img_array = mpimg.imread(str(img_file_path))
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
             if word2vec_captions.shape[0] > const.INPUT_SHAPE[0]:
@@ -65,8 +66,7 @@ def main():
     noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
     x_train += noise
 
-    out_folder = "tmp/train/cae/{}".format(args.dataset)
-    model = models.models_dict[args.model](const.INPUT_SHAPE, out_folder, args.use_tpu, args.use_dense_layers)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus, args.use_dense_layers)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]
@@ -75,7 +75,9 @@ def main():
     print("\n\n" + desc)
 
     try:
-        model.train(x_train, y_train, x_test, y_test, optimizer=optimizer, loss=loss, batch_size=batch_size)
+        out_folder = "tmp/train/cae/{}".format(args.dataset)
+        model.compile(optimizer, loss)
+        model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
     except Exception:
         traceback.print_exc()
 
