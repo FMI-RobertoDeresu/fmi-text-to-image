@@ -5,6 +5,8 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose
     # noinspection PyUnresolvedReferences
+    from tensorflow.contrib.keras.api.keras.layers import Dropout, Flatten, Dense, Reshape
+    # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.models import Model
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
@@ -12,7 +14,9 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     from tensorflow.contrib.keras import optimizers, losses
 else:
     # noinspection PyUnresolvedReferences
-    from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, UpSampling2D
+    from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose
+    # noinspection PyUnresolvedReferences
+    from tensorflow.keras.layers import Dropout, Flatten, Dense, Reshape
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.models import Model
     # noinspection PyUnresolvedReferences

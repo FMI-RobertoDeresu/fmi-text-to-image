@@ -5,13 +5,13 @@ import utils
 import pathlib
 import time
 import const
-import matplotlib.image as mpimg
 from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 parser.add_argument("-weights", help="all or last", default="all")
+parser.add_argument("-word2vec", help="local or remote", default="remote")
 
 
 def main():
@@ -27,7 +27,10 @@ def main():
         "zero two eight",
     ]
 
-    word2vec_captions = np.array(word2vec.get_embeddings_remote(captions))
+    if args.word2vec == "remote":
+        word2vec_captions = np.array(word2vec.get_embeddings_remote(captions))
+    else:
+        word2vec_captions = np.array(word2vec.get_embeddings(captions))
 
     save_path_template = "tmp/out/{}_{{}}.png".format(int(time.time()))
     pathlib.Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
