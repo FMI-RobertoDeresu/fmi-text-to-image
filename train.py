@@ -3,6 +3,7 @@ import const
 import models
 import utils
 import traceback
+import subprocess
 import numpy as np
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -15,7 +16,6 @@ parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
-parser.add_argument("-use-dense-layers", help="use dense layer", action="store_true")
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
@@ -23,22 +23,17 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 def main():
     optimizer_options = ([
         optimizers.Adam(clipnorm=5.),  # 0
-        optimizers.SGD(clipnorm=5.),  # 1
-        optimizers.SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5.),  # 2
-        optimizers.RMSprop(clipnorm=5.),  # 3
     ])
 
     loss_options = ([
         losses.binary_crossentropy,  # 0
-        losses.mean_squared_error,  # 2
+        losses.mean_squared_error,  # 1
     ])
 
     batch_size_options = ([
-        64,  # 0
-        128,  # 1
-        256,  # 2
-        512,  # 3
-        1024,  # 4
+        256,  # 0
+        512,  # 1
+        1024,  # 2
     ])
 
     args = parser.parse_args()
@@ -69,7 +64,7 @@ def main():
     noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
     x_train += noise
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus, args.use_dense_layers)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]
@@ -81,6 +76,19 @@ def main():
         out_folder = "tmp/train/cae/{}".format(args.dataset)
         model.compile(optimizer, loss)
         model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
+
+        subproc_args = [
+            "python", "predict.py",
+            "-model", args.model,
+            "-dataset", args.dataset,
+            "-weights", "last",
+            "-word2vec", "remote",
+            "-save-dir", str(Path(out_folder, "plots"))
+        ]
+
+        retcode = subprocess.call(subproc_args)
+        print("Plot code={}".format(retcode))
+
     except Exception:
         traceback.print_exc()
 

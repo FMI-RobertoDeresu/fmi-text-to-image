@@ -13,12 +13,11 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 def main():
     args = parser.parse_args()
 
-    optimizer_indexes = range(4)
+    optimizer_indexes = range(1)
     loss_indexes = range(2)
-    batch_size_indexes = range(5)
+    batch_size_indexes = range(3)
 
-    for optimizer, loss, batch_size, use_dense_layers in itertools.product(optimizer_indexes, loss_indexes,
-                                                                           batch_size_indexes, [True, False]):
+    for optimizer, loss, batch_size in itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes):
         try:
             subproc_args = [
                 "python", "train.py",
@@ -35,24 +34,10 @@ def main():
             if args.gpus is not None:
                 subproc_args.extend(["-gpus", str(args.gpus)])
 
-            if use_dense_layers:
-                subproc_args.extend(["-use-dense-layers"])
-
             retcode = subprocess.call(subproc_args)
             print("Code={}".format(retcode))
         except Exception:
             traceback.print_exc()
-
-    # subproc_args = [
-    #     "python", "predict.py",
-    #     "-model", args.model,
-    #     "-dataset", args.dataset,
-    #     "-weights", "all",
-    #     "-word2vec", "local",
-    # ]
-    #
-    # retcode = subprocess.call(subproc_args)
-    # print("Code={}".format(retcode))
 
 
 if __name__ == '__main__':

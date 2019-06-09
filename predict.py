@@ -12,6 +12,7 @@ parser.add_argument("-model", help="model name", default="cae")
 parser.add_argument("-dataset", help="dataset name", default="mnist10k")
 parser.add_argument("-weights", help="all or last", default="all")
 parser.add_argument("-word2vec", help="local or remote", default="remote")
+parser.add_argument("-save-dir", help="local or remote", default="tmp/out/{}".format(int(time.time())))
 
 
 def main():
@@ -19,8 +20,6 @@ def main():
     word2vec = Word2Vec()
 
     captions = [
-        "one",
-        "seven one",
         "one one one",
         "two three five",
         "three six nine",
@@ -32,8 +31,8 @@ def main():
     else:
         word2vec_captions = np.array(word2vec.get_embeddings(captions))
 
-    save_path_template = "tmp/out/{}/{{}}.png".format(int(time.time()))
-    Path(save_path_template).parent.mkdir(parents=True, exist_ok=True)
+    save_path_template = Path(args.save_dir, "{}.png")
+    save_path_template.parent.mkdir(parents=True, exist_ok=True)
 
     word2vec_captions_temp = []
     for index, word2vec_caption in enumerate(word2vec_captions):
@@ -51,23 +50,15 @@ def main():
     if args.weights == "last":
         train_sessions = train_sessions[-1:]
 
-    model1 = models.models_dict[args.model](const.INPUT_SHAPE, False, None, True)
-    model2 = models.models_dict[args.model](const.INPUT_SHAPE, False, None, False)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, False, None)
 
-    for train_session1, train_session2 in zip(train_sessions[0::2], train_sessions[1::2]):
-        model1.load_weights(train_session1["weights_path"])
-        images1 = model1.predict(x_predict=word2vec_captions)
+    for train_session1 in train_sessions:
+        model.load_weights(train_session1["weights_path"])
+        images1 = model.predict(x_predict=word2vec_captions)
 
         desc = train_session1["description"]
-        save_path = save_path_template.format(desc + "_1")
+        save_path = str(save_path_template).format(desc)
         utils.plot_utils.plot_multiple_images(images1, title=desc, labels=captions, save_path=save_path)
-
-        model2.load_weights(train_session2["weights_path"])
-        images2 = model2.predict(x_predict=word2vec_captions)
-
-        desc = train_session2["description"]
-        save_path = save_path_template.format(desc + "_2")
-        utils.plot_utils.plot_multiple_images(images2, title=desc, labels=captions, save_path=save_path)
 
 
 if __name__ == "__main__":

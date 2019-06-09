@@ -9,7 +9,7 @@ from tf_imports import multi_gpu_model
 
 
 class CAE:
-    def __init__(self, input_shape, use_tpu=False, gpus=None, use_dense_layers=True):
+    def __init__(self, input_shape, use_tpu=False, gpus=None):
         if use_tpu and gpus > 0:
             raise Exception("If tpus are used, gpus must be 0.")
 
@@ -19,19 +19,17 @@ class CAE:
         self.input_shape = input_shape
         self.optimizer = None
         self.loss = None
-        self.model = self._create_model(input_shape, use_tpu, gpus, use_dense_layers, False)
+        self.model = self._create_model(input_shape, use_tpu, gpus, False)
         self.model_compiled = False
 
-
     @staticmethod
-    def _create_model(input_shape, use_tpu, gpus, use_dense_layers, print_model_summary):
+    def _create_model(input_shape, use_tpu, gpus, print_model_summary):
         # N, M, _ = input_shape
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
-        input_drop_layer = Dropout(0.2)(input_layer)  # (N, M, 1)
 
         # encoder
-        encoder = Conv2D(2, (3, 3), padding='same', activation='relu')(input_drop_layer)  # (N, M, 2)
+        encoder = Conv2D(2, (3, 3), padding='same', activation='relu')(input_layer)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
         encoder = Conv2D(4, (3, 3), padding='same', activation='relu')(encoder)  # (N/2 , M/2, 4)
@@ -59,11 +57,9 @@ class CAE:
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
 
         encoder = Flatten()(encoder)  # (512)
-
-        if use_dense_layers:
-            encoder = Dense(512)(encoder)  # (512)
-            encoder = Dropout(0.2)(encoder)  # (512)
-            encoder = Dense(512)(encoder)  # (512)
+        encoder = Dense(1024)(encoder)  # (1024)
+        encoder = Dropout(0.1)(encoder)  # (1024)
+        encoder = Dense(512)(encoder)  # (512)
 
         # decoder
         decoder = Reshape((1, 1, 512))(encoder)  # (1, 1, 512)
@@ -76,10 +72,12 @@ class CAE:
         decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
         decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128,  3)
 
+        # model
         model = Model(input_layer, decoder)
         if print_model_summary:
             model.summary()
 
+        # tpu model
         if use_tpu:
             model = tf.contrib.tpu.keras_to_tpu_model(
                 model,
@@ -88,6 +86,7 @@ class CAE:
                 )
             )
 
+        # gpu model
         if (gpus or 0) > 2:
             model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
 
@@ -118,7 +117,7 @@ class CAE:
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=3,
+            patience=30,
             verbose=1,
             mode='min',
             restore_best_weights=True)
