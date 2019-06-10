@@ -87,7 +87,7 @@ class CAE:
             )
 
         # gpu model
-        if (gpus or 0) > 2:
+        if (gpus or 0) > 1:
             model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
 
         return model
