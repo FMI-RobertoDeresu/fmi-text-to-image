@@ -26,7 +26,7 @@ def main():
 
     loss_options = ([
         losses.mean_squared_error,  # 0
-        losses.mean_squared_logarithmic_error,  # 1
+        losses.binary_crossentropy,  # 1
     ])
 
     batch_size_options = ([
