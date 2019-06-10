@@ -72,7 +72,7 @@ def main():
     print("\n\n" + desc)
 
     try:
-        out_folder = "tmp/train/{}/{}_{}".format(args.model, utils.uid(), args.dataset)
+        out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
         model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
 
