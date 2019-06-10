@@ -26,7 +26,7 @@ def plot_multiple_images(iamges, title=None, labels=None, save_path=None):
             label = "{} - {}".format(label, labels[index])
         ax.set_title(label)
 
-    plt.show()
+    # plt.show()
 
     if save_path is not None:
         fig.savefig(save_path)
