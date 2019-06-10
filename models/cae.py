@@ -117,7 +117,7 @@ class CAE:
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=30,
+            patience=10,
             verbose=1,
             mode='min',
             restore_best_weights=True)
