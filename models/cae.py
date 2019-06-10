@@ -58,8 +58,8 @@ class CAE:
 
         encoder = Flatten()(encoder)  # (512)
 
-        encoder = Dense(2048)(encoder)  # (2048)
-        encoder = Dropout(0.1)(encoder)  # (2048)
+        # encoder = Dense(2048)(encoder)  # (2048)
+        # encoder = Dropout(0.1)(encoder)  # (2048)
 
         encoder = Dense(1024)(encoder)  # (1024)
         encoder = Dropout(0.1)(encoder)  # (1024)
@@ -122,7 +122,7 @@ class CAE:
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=50,
+            patience=30,
             verbose=1,
             mode='min',
             restore_best_weights=True)
