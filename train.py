@@ -3,7 +3,6 @@ import const
 import models
 import utils
 import traceback
-import subprocess
 import numpy as np
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -75,19 +74,6 @@ def main():
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
         model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
-
-        subproc_args = [
-            "python", "predict.py",
-            "-model", args.model,
-            "-train-results-dir", out_folder,
-            "-weights", "last",
-            "-word2vec", "remote",
-            "-save-dir", str(Path(out_folder, "plots"))
-        ]
-
-        retcode = subprocess.call(subproc_args)
-        print("Plot code={}".format(retcode))
-
     except Exception:
         traceback.print_exc()
 

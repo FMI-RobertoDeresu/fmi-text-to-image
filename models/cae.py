@@ -185,7 +185,7 @@ class CAE:
         if not Path(weights_file_path).exists():
             raise Exception("weights file '{}' not found.".format(weights_file_path))
 
-        self.model.load_weights(weights_file_path)
+        self.model.load_weights(str(weights_file_path))
 
     def predict(self, x_predict):
         prediction = self.model.predict(x=x_predict, batch_size=128)

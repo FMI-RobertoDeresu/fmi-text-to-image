@@ -2,7 +2,6 @@ import argparse
 import models
 import numpy as np
 import utils
-import time
 import const
 from pathlib import Path
 from models.word2vec import Word2Vec
@@ -12,7 +11,6 @@ parser.add_argument("-model", help="model name", default="cae")
 parser.add_argument("-train-results-dir", help="results directory", default="tmp/train/cae/mnist30k")
 parser.add_argument("-weights", help="all or last", default="all")
 parser.add_argument("-word2vec", help="local or remote", default="remote")
-parser.add_argument("-save-dir", help="local or remote", default="tmp/out/{}".format(int(time.time())))
 
 
 def main():
@@ -31,9 +29,6 @@ def main():
     else:
         word2vec_captions = np.array(word2vec.get_embeddings(captions))
 
-    save_path_template = Path(args.save_dir, "{}.png")
-    save_path_template.parent.mkdir(parents=True, exist_ok=True)
-
     word2vec_captions_temp = []
     for index, word2vec_caption in enumerate(word2vec_captions):
         padding = ((0, const.INPUT_SHAPE[0] - len(word2vec_caption)), (0, 0))
@@ -46,6 +41,9 @@ def main():
     results_file_path = Path(args.train_results_dir, "results.json")
     train_results = utils.json_utils.load(results_file_path)
     train_sessions = train_results["training_sessions"]
+
+    save_path_template = Path(args.train_results_dir, "plots", "{}.png")
+    save_path_template.parent.mkdir(parents=True, exist_ok=True)
 
     if args.weights == "last":
         train_sessions = train_sessions[-1:]
