@@ -26,14 +26,13 @@ def main():
     ])
 
     loss_options = ([
-        losses.binary_crossentropy,  # 0
-        losses.mean_squared_error,  # 1
+        losses.mean_squared_error,  # 0
+        losses.mean_squared_logarithmic_error,  # 1
     ])
 
     batch_size_options = ([
         256,  # 0
         512,  # 1
-        1024,  # 2
     ])
 
     args = parser.parse_args()
@@ -73,14 +72,14 @@ def main():
     print("\n\n" + desc)
 
     try:
-        out_folder = "tmp/train/cae/{}".format(args.dataset)
+        out_folder = "tmp/train/{}/{}_{}".format(args.model, utils.uid(), args.dataset)
         model.compile(optimizer, loss)
         model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
 
         subproc_args = [
             "python", "predict.py",
             "-model", args.model,
-            "-dataset", args.dataset,
+            "-train-results-dir", out_folder,
             "-weights", "last",
             "-word2vec", "remote",
             "-save-dir", str(Path(out_folder, "plots"))

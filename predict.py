@@ -9,7 +9,7 @@ from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-dataset", help="dataset name", default="mnist10k")
+parser.add_argument("-train-results-dir", help="results directory", default="tmp/train/cae/mnist30k")
 parser.add_argument("-weights", help="all or last", default="all")
 parser.add_argument("-word2vec", help="local or remote", default="remote")
 parser.add_argument("-save-dir", help="local or remote", default="tmp/out/{}".format(int(time.time())))
@@ -43,8 +43,8 @@ def main():
 
     word2vec_captions = np.expand_dims(np.array(word2vec_captions_temp), 4)
 
-    results_file = "tmp/train/cae/{}/results.json".format(args.dataset)
-    train_results = utils.json_utils.load(results_file)
+    results_file_path = Path(args.train_results_dir, "results.json")
+    train_results = utils.json_utils.load(results_file_path)
     train_sessions = train_results["training_sessions"]
 
     if args.weights == "last":
@@ -52,11 +52,12 @@ def main():
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, False, None)
 
-    for train_session1 in train_sessions:
-        model.load_weights(train_session1["weights_path"])
+    for train_session in train_sessions:
+        weights_path = Path(args.train_results_dir, train_session["weights_path"])
+        model.load_weights(weights_path)
         images1 = model.predict(x_predict=word2vec_captions)
 
-        desc = train_session1["description"]
+        desc = train_session["description"]
         save_path = str(save_path_template).format(desc)
         utils.plot_utils.plot_multiple_images(images1, title=desc, labels=captions, save_path=save_path)
 

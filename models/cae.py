@@ -57,8 +57,13 @@ class CAE:
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
 
         encoder = Flatten()(encoder)  # (512)
+
+        encoder = Dense(2048)(encoder)  # (2048)
+        encoder = Dropout(0.1)(encoder)  # (2048)
+
         encoder = Dense(1024)(encoder)  # (1024)
         encoder = Dropout(0.1)(encoder)  # (1024)
+
         encoder = Dense(512)(encoder)  # (512)
 
         # decoder
@@ -142,7 +147,8 @@ class CAE:
             validation_split=0.2)
 
         # save
-        weights_path = Path("{}/weights/{}.h5".format(out_folder, description))
+        weights_relative_path = Path("weights/{}.h5".format(description))
+        weights_path = Path(out_folder, weights_relative_path)
         weights_path.parent.mkdir(parents=True, exist_ok=True)
         self.model.save_weights(str(weights_path))
 
@@ -152,7 +158,7 @@ class CAE:
 
         # save results
         results_path = Path("{}/results.json".format(out_folder))
-        self._save_result(results_path, train_uid, description, start_time, fit, loss, accuracy, weights_path)
+        self._save_result(results_path, train_uid, description, start_time, fit, loss, accuracy, weights_relative_path)
 
     def _save_result(self, path, train_uid, description, start_time, fit, loss, accuracy, weights_path):
         if path.exists():
