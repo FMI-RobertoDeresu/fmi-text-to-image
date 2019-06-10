@@ -92,7 +92,7 @@ class CAE:
             )
 
         # gpu model
-        if (gpus or 0) > 2:
+        if (gpus or 0) > 1:
             model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
 
         return model
@@ -122,7 +122,7 @@ class CAE:
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=30,
+            patience=10,
             verbose=1,
             mode='min',
             restore_best_weights=True)
