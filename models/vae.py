@@ -61,7 +61,7 @@ class VAE(BaseModel):
         self.optimizer = optimizer
         self.loss = loss
 
-        self.model.compile(optimizer=optimizer, loss=self._loss, metrics=['accuracy'])
+        self.model.compile(optimizer=optimizer, loss=self._loss, metrics=[])
         self.model_compiled = True
 
     def _loss(self, y_true, y_pred):

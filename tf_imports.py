@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.summary import summary as tf_summary
 from packaging import version
 from keras import backend as K
 from keras.utils import multi_gpu_model
@@ -11,7 +12,7 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.models import Model
     # noinspection PyUnresolvedReferences
-    from tensorflow.contrib.keras.api.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+    from tensorflow.contrib.keras.api.keras.callbacks import Callback, TensorBoard, ModelCheckpoint, EarlyStopping
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras import optimizers, losses
 else:
@@ -22,7 +23,7 @@ else:
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.models import Model
     # noinspection PyUnresolvedReferences
-    from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+    from tensorflow.keras.callbacks import Callback, TensorBoard, ModelCheckpoint
     # noinspection PyUnresolvedReferences
     from keras.callbacks import EarlyStopping
     # noinspection PyUnresolvedReferences

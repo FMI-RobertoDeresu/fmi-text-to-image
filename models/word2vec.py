@@ -7,7 +7,20 @@ import nltk
 
 
 class Word2Vec:
+    __instance = None
+
+    @staticmethod
+    def get_instance():
+        if Word2Vec.__instance is None:
+            Word2Vec()
+        return Word2Vec.__instance
+
     def __init__(self):
+        if Word2Vec.__instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            Word2Vec.__instance = self
+
         self.model = None
         self.useNorm = False
         self.model_path = '{}/../tmp/word2vec_300.bin'.format(os.path.dirname(os.path.realpath(__file__)))

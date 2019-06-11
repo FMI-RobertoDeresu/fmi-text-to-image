@@ -68,5 +68,5 @@ class CAE(BaseModel):
 
         self.optimizer = optimizer
         self.loss = loss
-        self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=[])
         self.model_compiled = True

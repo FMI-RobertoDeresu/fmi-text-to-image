@@ -5,7 +5,6 @@ import utils
 import traceback
 import numpy as np
 from pathlib import Path
-from sklearn.model_selection import train_test_split
 from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
 
@@ -59,10 +58,9 @@ def main():
 
     x, y = tuple(zip(*data))
     x, y = (np.expand_dims(x, 4), np.array(y))
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
-
-    noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
-    x_train += noise
+    # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
+    # noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
+    # x_train += noise
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus)
     optimizer = optimizer_options[args.optimizer_index]
@@ -72,10 +70,17 @@ def main():
     desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
     print("\n\n" + desc)
 
+    output_checkpoint_inputs = [
+        "one one one",
+        "two three five",
+        "three six nine",
+        "zero two eight",
+    ]
+
     try:
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
-        model.train(x_train, y_train, x_test, y_test, batch_size, out_folder)
+        model.train(x, y, batch_size, out_folder, output_checkpoint_inputs)
     except Exception:
         traceback.print_exc()
 

@@ -1,11 +1,9 @@
 import utils
-import time
-import tensorflow as tf
 from pathlib import Path
-from datetime import datetime
 from tf_imports import TensorBoard, EarlyStopping
 from abc import ABC, abstractmethod
-from tf_imports import multi_gpu_model
+from tf_imports import tf, multi_gpu_model, tf_summary
+from callbacks import OutputCheckpoint, TensorBoard2
 
 
 class BaseModel(ABC):
@@ -53,7 +51,7 @@ class BaseModel(ABC):
     def _compile(self, optimizer, loss):
         pass
 
-    def train(self, x_train, y_train, x_test, y_test, batch_size, out_folder):
+    def train(self, x, y, batch_size, out_folder, output_checkpoint_inputs):
         if not self.model_compiled:
             raise Exception("The model must be compiled first.")
 
@@ -74,59 +72,34 @@ class BaseModel(ABC):
             mode='min',
             restore_best_weights=True)
 
-        tensor_board_log_dir = Path("tensorboard/{}".format(description))
+        tensor_board_log_dir = Path(out_folder, "tensorboard", description)
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
-        tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
+        tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir))
+        tensor_board = TensorBoard2(writer=tensor_board_writer)
 
-        callbacks = [early_stopping]
+        output_checkpoint = OutputCheckpoint(
+            tensor_board_writer=tensor_board_writer,
+            inputs=output_checkpoint_inputs,
+            print_every=3)
+
+        callbacks = [early_stopping, tensor_board, output_checkpoint]
 
         # fit
-        start_time = time.time()
-        fit = self.model.fit(
-            x=x_train,
-            y=y_train,
+        self.model.fit(
+            x=x,
+            y=y,
             batch_size=batch_size,
             epochs=500,
-            # epochs=1,
+            # epochs=7,
             verbose=1,
             shuffle=True,
             callbacks=callbacks,
             validation_split=0.2)
 
         # save
-        weights_relative_path = Path("weights/{}.h5".format(description))
-        weights_path = Path(out_folder, weights_relative_path)
+        weights_path = Path(out_folder, "weights", "{}.h5".format(description))
         weights_path.parent.mkdir(parents=True, exist_ok=True)
         self.model.save_weights(str(weights_path))
-
-        # evaluate
-        evaluate = self.model.evaluate(x=x_test, y=y_test, verbose=0)
-        loss, accuracy = evaluate[:2]
-
-        # save results
-        results_path = Path("{}/results.json".format(out_folder))
-        self._save_result(results_path, train_uid, description, start_time, fit, loss, accuracy, weights_relative_path)
-
-    def _save_result(self, path, train_uid, description, start_time, fit, loss, accuracy, weights_path):
-        if path.exists():
-            train_results = utils.json_utils.load(path)
-        else:
-            train_results = {
-                "model": self.__class__.__name__,
-                "input_shape": self.input_shape,
-                "training_sessions": []
-            }
-
-        train_results["training_sessions"].append({
-            "uid": train_uid,
-            "description": description,
-            "elapsed_time": str(datetime.fromtimestamp(time.time()) - datetime.fromtimestamp(start_time)),
-            "trained_epochs": len(fit.epoch),
-            "loss": str(loss),
-            "acc": str(accuracy),
-            "weights_path": weights_path.as_posix()
-        })
-        utils.json_utils.dump(train_results, path)
 
     def load_weights(self, weights_file_path):
         if not Path(weights_file_path).exists():

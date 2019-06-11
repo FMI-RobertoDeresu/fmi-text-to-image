@@ -44,7 +44,7 @@ def main():
         "coco-train-2014"
     ])[1:2]
 
-    word2vec = Word2Vec()
+    word2vec = Word2Vec.get_instance()
 
     for dataset_name in datasets_names:
         print("Processing {}".format(dataset_name))

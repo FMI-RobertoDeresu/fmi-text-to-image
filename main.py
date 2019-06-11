@@ -35,6 +35,7 @@ def captions_lengths():
 
         print("{} - {}".format(dataset_path.name, max_length))
 
+
 def max_words_per_caption():
     datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
     tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
@@ -108,21 +109,6 @@ def get_available_gpus():
     for index, device in enumerate(local_device_protos):
         print("\nDevice {}:".format(index))
         print(device)
-
-
-def replace():
-    results_path = Path("./tmp/train/cae/mnist10k/results.json")
-    train_results = utils.json_utils.load(results_path)
-
-    train_sessions = train_results["training_sessions"]
-    for train_session in train_sessions:
-        train_session["weights_path"] = train_session["best_checkpoint_path"].format(
-            out_folder=train_session["description"]) + ".data-00000-of-00001"
-        train_session.pop("best_checkpoint_path")
-        train_session.pop("early_stopping")
-
-    train_results["training_sessions"] = train_sessions
-    utils.json_utils.dump(train_results, results_path)
 
 
 def noise_image():
