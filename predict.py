@@ -7,8 +7,8 @@ from pathlib import Path
 from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-train-results-dir", help="results directory", default="tmp/train/cae/mnist30k")
+parser.add_argument("-model", help="model name", default="vae")
+parser.add_argument("-train-results-dir", help="results directory", default="tmp/train/vae/mnist30k")
 parser.add_argument("-weights", help="all or last", default="all")
 parser.add_argument("-word2vec", help="local or remote", default="remote")
 
