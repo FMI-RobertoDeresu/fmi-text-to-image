@@ -8,7 +8,7 @@ class CAE(BaseModel):
     def __init__(self, input_shape, use_tpu=False, gpus=None):
         super().__init__(input_shape, use_tpu, gpus)
 
-    def _create_model(self, input_shape, use_tpu, gpus, print_model_summary):
+    def _create_model(self, input_shape):
         # N, M, _ = input_shape
         # input
         input_layer = Input(shape=input_shape)  # (N, M, 1)
@@ -58,9 +58,7 @@ class CAE(BaseModel):
         decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128, 3)
 
         # CAE model
-        model = Model(input_layer, decoder)
-        if print_model_summary:
-            model.summary()
+        model = Model(inputs=input_layer, outputs=decoder)
 
         return model
 

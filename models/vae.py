@@ -9,10 +9,7 @@ class VAE(BaseModel):
     def __init__(self, input_shape, use_tpu=False, gpus=None):
         super().__init__(input_shape, use_tpu, gpus)
 
-        self.vae_inputs = None
-        self.vae_outputs = None
-
-    def _create_model(self, input_shape, use_tpu, gpus, print_model_summary):
+    def _create_model(self, input_shape):
         latent_dim = 2
 
         # VAE model = encoder + decoder
@@ -52,9 +49,6 @@ class VAE(BaseModel):
         vae_outputs = decoder(encoder(encoder_inputs)[2])
         vae = Model(inputs=encoder_inputs, outputs=vae_outputs, name='vae')
 
-        self.vae_inputs = encoder_inputs
-        self.vae_outputs = vae_outputs
-
         self.z_mean = z_mean
         self.z_log_var = z_log_var
 
@@ -67,7 +61,11 @@ class VAE(BaseModel):
         self.optimizer = optimizer
         self.loss = loss
 
-        reconstruction_loss = loss(K.flatten(self.vae_inputs), K.flatten(self.vae_outputs))
+        self.model.compile(optimizer=optimizer, loss=self._loss)
+        self.model_compiled = True
+
+    def _loss(self, y_true, y_pred):
+        reconstruction_loss = self.loss(K.flatten(y_true), K.flatten(y_pred))
         reconstruction_loss *= const.OUTPUT_IMAGE_SIZE[0] * const.OUTPUT_IMAGE_SIZE[1]
 
         kl_loss = 1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var)
@@ -75,10 +73,7 @@ class VAE(BaseModel):
         kl_loss *= -0.5
 
         vae_loss = K.mean(reconstruction_loss + kl_loss)
-        self.model.add_loss(vae_loss)
-
-        self.model.compile(optimizer=optimizer)
-        self.model_compiled = True
+        return vae_loss
 
     # reparameterization trick (instead of sampling from Q(z|X), sample eps = N(0,I))
     @staticmethod

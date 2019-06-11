@@ -40,7 +40,7 @@ class BaseModel(ABC):
         self.model_compiled = False
 
     @abstractmethod
-    def _create_model(self, input_shape, use_tpu, gpus, print_model_summary):
+    def _create_model(self, input_shape):
         pass
 
     def compile(self, optimizer, loss):
@@ -74,9 +74,9 @@ class BaseModel(ABC):
             mode='min',
             restore_best_weights=True)
 
-        # tensor_board_log_dir = Path("{}/tensorboard/{}".format(out_folder, description))
-        # tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
-        # tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
+        tensor_board_log_dir = Path("tensorboard/{}".format(description))
+        tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
+        tensor_board = TensorBoard(log_dir=str(tensor_board_log_dir))
 
         callbacks = [early_stopping]
 
