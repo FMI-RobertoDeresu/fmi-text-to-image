@@ -2,7 +2,7 @@ import utils
 from pathlib import Path
 from tf_imports import TensorBoard, EarlyStopping
 from abc import ABC, abstractmethod
-from tf_imports import tf, multi_gpu_model, tf_summary
+from tf_imports import tf, K, multi_gpu_model, tf_summary
 from callbacks import OutputCheckpoint, TensorBoard2
 
 
@@ -74,7 +74,7 @@ class BaseModel(ABC):
 
         tensor_board_log_dir = Path(out_folder, "tensorboard", description)
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
-        tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir))
+        tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir), K.get_session().graph)
         tensor_board = TensorBoard2(writer=tensor_board_writer)
 
         output_checkpoint = OutputCheckpoint(
