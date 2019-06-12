@@ -82,8 +82,6 @@ class BaseModel(ABC):
         tensor_board_log_dir = Path(out_folder, "tensorboard", description)
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
         tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir), K.get_session().graph)
-        tensor_board = TensorBoard2(writer=tensor_board_writer)
-        callbacks.append(tensor_board)
 
         if output_checkpoint_inputs is not None:
             output_checkpoint = OutputCheckpoint(
@@ -92,13 +90,17 @@ class BaseModel(ABC):
                 print_every=10)
             callbacks.append(output_checkpoint)
 
+        # last because close the writer on training end
+        tensor_board = TensorBoard2(writer=tensor_board_writer)
+        callbacks.append(tensor_board)
+
         # fit
         self.model.fit(
             x=x,
             y=y,
             batch_size=batch_size,
             epochs=500,
-            # epochs=7,
+            # epochs=8,
             verbose=1,
             shuffle=True,
             callbacks=callbacks,
