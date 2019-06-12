@@ -99,7 +99,7 @@ class BaseModel(ABC):
         # save
         weights_path = Path(out_folder, "weights", "{}.h5".format(description))
         weights_path.parent.mkdir(parents=True, exist_ok=True)
-        self.model.save_weights(str(weights_path))
+        # self.model.save_weights(str(weights_path))
 
     def load_weights(self, weights_file_path):
         if not Path(weights_file_path).exists():
