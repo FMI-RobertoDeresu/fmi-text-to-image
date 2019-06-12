@@ -17,7 +17,7 @@ class Word2Vec:
 
     def __init__(self):
         if Word2Vec.__instance is not None:
-            raise Exception("This class is a singleton!")
+            raise Exception("This class is a singleton. Call get_instance method.")
         else:
             Word2Vec.__instance = self
 

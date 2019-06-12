@@ -20,7 +20,7 @@ parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 
-def lr_schedule(epoch, lr=None):
+def lr_schedule(epoch):
     lr = 1e-3
     if epoch > 180:
         lr *= 0.5e-3
@@ -36,7 +36,7 @@ def lr_schedule(epoch, lr=None):
 
 def main():
     optimizer_options = ([
-        optimizers.Adam(lr=lr_schedule(0), clipnorm=0.001),  # 0
+        optimizers.Adam(lr=lr_schedule(0), beta_1=0.5, beta_2=0.5, clipnorm=0.001),  # 0
     ])
 
     loss_options = ([
@@ -69,7 +69,7 @@ def main():
 
             data.append((word2vec_captions, img_array))
 
-    x, y = tuple(zip(*data))
+    x, y = tuple(zip(*data[:]))
     x, y = (np.expand_dims(x, 4), np.array(y))
     # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
     # noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)

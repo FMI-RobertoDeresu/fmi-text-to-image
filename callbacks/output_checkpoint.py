@@ -28,8 +28,7 @@ class OutputCheckpoint(Callback):
 
     def on_train_end(self, logs=None):
         self.train_end = True
-        if self.epoch % self.print_every > 0:
-            self.log()
+        self.log()
 
     def log(self):
         outputs = self.model.predict(x=self.inputs_word2vec, batch_size=128)

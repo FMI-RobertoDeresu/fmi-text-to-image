@@ -9,9 +9,10 @@ import skimage
 import matplotlib.pyplot as plt
 from pathlib import Path
 from tensorflow.python.client import device_lib
+from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-action", help="action to execute", default="max_words_per_caption")
+parser.add_argument("-action", help="action to execute", default="word2vec_dict")
 
 
 def main():
@@ -141,6 +142,14 @@ def noise_image():
     plt.show()
 
 
+def word2vec_dict():
+    word2vec = Word2Vec()
+    word2vec.get_embeddings(["house"])
+    for key, value in word2vec.model.vocab.items():
+        for key1, value1 in value.items():
+            print(key1, " --- ", value1)
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -149,7 +158,8 @@ if __name__ == '__main__':
         "max_words_per_caption": max_words_per_caption,
         "using_gpu": using_gpu,
         "test_tpu_flops": test_tpu_flops,
-        "get_available_gpus": get_available_gpus
+        "get_available_gpus": get_available_gpus,
+        "word2vec_dict": word2vec_dict
     }
 
     actions_dict[args.action]()
