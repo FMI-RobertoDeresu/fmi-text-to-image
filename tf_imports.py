@@ -11,7 +11,7 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.models import Model
     # noinspection PyUnresolvedReferences
-    from tensorflow.contrib.keras.api.keras.callbacks import Callback, TensorBoard, ModelCheckpoint, EarlyStopping
+    from tensorflow.contrib.keras.api.keras.callbacks import Callback, TensorBoard, EarlyStopping, LearningRateScheduler
     # noinspection PyUnresolvedReferences
     from tensorflow.python.keras.utils import multi_gpu_model
     # noinspection PyUnresolvedReferences
@@ -26,7 +26,7 @@ else:
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.models import Model
     # noinspection PyUnresolvedReferences
-    from tensorflow.keras.callbacks import Callback, TensorBoard, ModelCheckpoint
+    from tensorflow.keras.callbacks import Callback, TensorBoard, LearningRateScheduler
     # noinspection PyUnresolvedReferences
     from tensorflow.python.keras.utils import multi_gpu_model
     # noinspection PyUnresolvedReferences

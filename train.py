@@ -20,9 +20,23 @@ parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 
+def lr_schedule(epoch, lr=None):
+    lr = 1e-3
+    if epoch > 180:
+        lr *= 0.5e-3
+    elif epoch > 160:
+        lr *= 1e-3
+    elif epoch > 120:
+        lr *= 1e-2
+    elif epoch > 80:
+        lr *= 1e-1
+    print('Learning rate: ', lr)
+    return lr
+
+
 def main():
     optimizer_options = ([
-        optimizers.Adam(lr=0.0002, beta_1=0.5, clipnorm=0.001),  # 0
+        optimizers.Adam(lr=lr_schedule(0), clipnorm=0.001),  # 0
     ])
 
     loss_options = ([
@@ -79,7 +93,7 @@ def main():
     try:
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
-        model.train(x, y, batch_size, out_folder, output_checkpoint_inputs)
+        model.train(x, y, batch_size, out_folder, lr_schedule, output_checkpoint_inputs)
     except Exception:
         traceback.print_exc()
 

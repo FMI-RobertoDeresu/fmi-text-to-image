@@ -1,6 +1,6 @@
 import utils
 from pathlib import Path
-from tf_imports import TensorBoard, EarlyStopping
+from tf_imports import EarlyStopping, LearningRateScheduler
 from abc import ABC, abstractmethod
 from tf_imports import tf, K, multi_gpu_model, tf_summary
 from callbacks import OutputCheckpoint, TensorBoard2
@@ -51,7 +51,7 @@ class BaseModel(ABC):
     def _compile(self, optimizer, loss):
         pass
 
-    def train(self, x, y, batch_size, out_folder, output_checkpoint_inputs):
+    def train(self, x, y, batch_size, out_folder, lr_schedule=None, output_checkpoint_inputs=None):
         if not self.model_compiled:
             raise Exception("The model must be compiled first.")
 
@@ -64,6 +64,8 @@ class BaseModel(ABC):
         print("Training: {}".format(description))
 
         # callbacks
+        callbacks = []
+
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
@@ -71,18 +73,24 @@ class BaseModel(ABC):
             verbose=1,
             mode='min',
             restore_best_weights=True)
+        callbacks.append(early_stopping)
+
+        if lr_schedule is not None:
+            learning_rate_scheduler = LearningRateScheduler(lr_schedule)
+            callbacks.append(learning_rate_scheduler)
 
         tensor_board_log_dir = Path(out_folder, "tensorboard", description)
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
         tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir), K.get_session().graph)
         tensor_board = TensorBoard2(writer=tensor_board_writer)
+        callbacks.append(tensor_board)
 
-        output_checkpoint = OutputCheckpoint(
-            tensor_board_writer=tensor_board_writer,
-            inputs=output_checkpoint_inputs,
-            print_every=10)
-
-        callbacks = [early_stopping, tensor_board, output_checkpoint]
+        if output_checkpoint_inputs is not None:
+            output_checkpoint = OutputCheckpoint(
+                tensor_board_writer=tensor_board_writer,
+                inputs=output_checkpoint_inputs,
+                print_every=10)
+            callbacks.append(output_checkpoint)
 
         # fit
         self.model.fit(
