@@ -1,4 +1,4 @@
-from tf_imports import TensorBoard
+from tf_imports import K, TensorBoard
 
 
 class TensorBoard2(TensorBoard):
@@ -12,3 +12,11 @@ class TensorBoard2(TensorBoard):
 
     def _init_writer(self):
         pass
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs.update({'lr': K.eval(self.model.optimizer.lr)})
+        logs.update({'beta_1': K.eval(self.model.optimizer.beta_1)})
+        logs.update({'beta_2': K.eval(self.model.optimizer.beta_2)})
+        logs.update({'epsilon': K.eval(self.model.optimizer.epsilon)})
+        logs.update({'decay': K.eval(self.model.optimizer.decay)})
+        super().on_epoch_end(epoch, logs)

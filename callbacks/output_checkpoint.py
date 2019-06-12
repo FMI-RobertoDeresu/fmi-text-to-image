@@ -1,7 +1,7 @@
 import numpy as np
 import utils
 import const
-from tf_imports import tf, Callback
+from tf_imports import tf, K, Callback
 from models.word2vec import Word2Vec
 
 
@@ -12,6 +12,9 @@ class OutputCheckpoint(Callback):
         self.inputs = inputs
         self.print_every = print_every
 
+        self.epoch = 0
+        self.train_end = False
+
         inputs_word2vec = np.array(Word2Vec.get_instance().get_embeddings_remote(inputs))
         inputs_word2vec = utils.process_w2v_inputs(inputs_word2vec, const.INPUT_SHAPE)
 
@@ -19,13 +22,23 @@ class OutputCheckpoint(Callback):
         self.inputs_word2vec = inputs_word2vec
 
     def on_epoch_end(self, epoch, logs=None):
-        if epoch % self.print_every > 0:
-            return
+        self.epoch = epoch
+        if epoch % self.print_every == 0:
+            self.log()
 
+    def on_train_end(self, logs=None):
+        self.train_end = True
+        if self.epoch % self.print_every > 0:
+            self.log()
+
+    def log(self):
         outputs = self.model.predict(x=self.inputs_word2vec, batch_size=128)
 
-        name = "output checkpoint epoch {}".format(epoch + 1)
-        summary = tf.summary.image(name=name, tensor=outputs, max_outputs=4)
-        with tf.Session().as_default():
-            self.writer.add_summary(summary.eval(), global_step=epoch)
+        if self.train_end:
+            name = "output end training".format(self.epoch + 1)
+        else:
+            name = "output checkpoint epoch {}".format(self.epoch + 1)
+
+        summary = K.eval(tf.summary.image(name=name, tensor=outputs, max_outputs=4))
+        self.writer.add_summary(summary, global_step=self.epoch)
         self.writer.flush()

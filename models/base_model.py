@@ -67,7 +67,7 @@ class BaseModel(ABC):
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=30,
+            patience=10,
             verbose=1,
             mode='min',
             restore_best_weights=True)
@@ -80,7 +80,7 @@ class BaseModel(ABC):
         output_checkpoint = OutputCheckpoint(
             tensor_board_writer=tensor_board_writer,
             inputs=output_checkpoint_inputs,
-            print_every=3)
+            print_every=10)
 
         callbacks = [early_stopping, tensor_board, output_checkpoint]
 

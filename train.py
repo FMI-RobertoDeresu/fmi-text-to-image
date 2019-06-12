@@ -22,7 +22,7 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 
 def main():
     optimizer_options = ([
-        optimizers.Adam(clipnorm=0.001),  # 0
+        optimizers.Adam(lr=0.0002, beta_1=0.5, clipnorm=0.001),  # 0
     ])
 
     loss_options = ([
@@ -32,7 +32,6 @@ def main():
 
     batch_size_options = ([
         256,  # 0
-        512,  # 1
     ])
 
     args = parser.parse_args()

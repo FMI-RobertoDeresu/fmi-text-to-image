@@ -11,7 +11,7 @@ from pathlib import Path
 from tensorflow.python.client import device_lib
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-action", help="action to execute", default="main")
+parser.add_argument("-action", help="action to execute", default="max_words_per_caption")
 
 
 def main():
@@ -37,7 +37,7 @@ def captions_lengths():
 
 
 def max_words_per_caption():
-    datasets_names = ["mnist1k-3x", "oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
+    datasets_names = ["oxford-102-flowers", "cub-200-2011", "flickr30k", "coco-train-2014"]
     tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
     stopwords = set(nltk.corpus.stopwords.words('english'))
     print(stopwords)
@@ -146,7 +146,6 @@ if __name__ == '__main__':
 
     actions_dict = {
         "main": main,
-        "test_cae": test_cae,
         "max_words_per_caption": max_words_per_caption,
         "using_gpu": using_gpu,
         "test_tpu_flops": test_tpu_flops,
