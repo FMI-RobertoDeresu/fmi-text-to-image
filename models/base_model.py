@@ -69,7 +69,7 @@ class BaseModel(ABC):
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.001,
-            patience=30,
+            patience=5,
             verbose=1,
             mode='min',
             restore_best_weights=True)
@@ -99,7 +99,7 @@ class BaseModel(ABC):
             x=x,
             y=y,
             batch_size=batch_size,
-            epochs=500,
+            epochs=300,
             # epochs=8,
             verbose=1,
             shuffle=True,

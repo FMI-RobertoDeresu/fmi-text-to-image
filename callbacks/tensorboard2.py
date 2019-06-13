@@ -1,4 +1,5 @@
-from tf_imports import K, TensorBoard
+import utils
+from tf_imports import tf, K, TensorBoard
 
 
 class TensorBoard2(TensorBoard):
@@ -12,6 +13,16 @@ class TensorBoard2(TensorBoard):
 
     def _init_writer(self):
         pass
+
+    def on_train_begin(self, logs=None):
+        optimizer_config = { "name":self.model.optimizer.__class__.__name__}
+        optimizer_config.update(self.model.optimizer.get_config())
+        optimizer_config_json = utils.json_utils.dumps(optimizer_config)
+        optimizer_config_tensor = tf.convert_to_tensor(optimizer_config_json)
+
+        summary = K.eval(tf.summary.text(name="optimizer vars", tensor=optimizer_config_tensor))
+        self.writer.add_summary(summary, global_step=0)
+        self.writer.flush()
 
     def on_epoch_end(self, epoch, logs=None):
         logs.update({'lr': K.eval(self.model.optimizer.lr)})

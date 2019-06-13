@@ -15,8 +15,8 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 def main():
     args = parser.parse_args()
 
-    optimizer_indexes = range(1)
-    loss_indexes = range(2)
+    optimizer_indexes = range(18)
+    loss_indexes = range(1)
     batch_size_indexes = range(1)
 
     for optimizer, loss, batch_size in itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes):
