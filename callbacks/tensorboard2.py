@@ -14,4 +14,5 @@ class TensorBoard2(TensorBoard):
         pass
 
     def on_epoch_end(self, epoch, logs=None):
+        logs.update({'lr': K.eval(self.model.optimizer.lr)})
         super().on_epoch_end(epoch, logs)

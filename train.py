@@ -21,7 +21,7 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 
 
 def lr_schedule(epoch):
-    lr = 1e-3
+    lr = 2e-3
     if epoch > 180:
         lr *= 0.5e-3
     elif epoch > 160:
@@ -71,9 +71,6 @@ def main():
 
     x, y = tuple(zip(*data[:]))
     x, y = (np.expand_dims(x, 4), np.array(y))
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True)
-    # noise = np.random.normal(loc=0, scale=0.03, size=x_train.shape)
-    # x_train += noise
 
     model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus)
     optimizer = optimizer_options[args.optimizer_index]
@@ -84,16 +81,22 @@ def main():
     print("\n\n" + desc)
 
     output_checkpoint_inputs = [
-        "one one one",
-        "two three five",
-        "three six nine",
-        "zero two eight",
+        "zero one two",
+        "three four five",
+        "six seven eight",
+        "nine",
     ]
 
     try:
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
-        model.train(x, y, batch_size, out_folder, lr_schedule, output_checkpoint_inputs)
+        model.train(
+            x=x,
+            y=y,
+            batch_size=batch_size,
+            out_folder=out_folder,
+            lr_schedule=None,
+            output_checkpoint_inputs=output_checkpoint_inputs)
     except Exception:
         traceback.print_exc()
 
