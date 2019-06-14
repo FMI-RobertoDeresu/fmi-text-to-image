@@ -36,12 +36,11 @@ def lr_schedule(epoch):
 
 def main():
     optimizer_options = []
-    for beta_1 in np.linspace(1e-3, 1-1e-3, 3):
-        for beta_2 in np.linspace(1e-3, 1 - 1e-3, 3):
-            for clipnorm in np.linspace(1e-3, 3., 2):
-                optimizer_options.append(
-                    optimizers.Adam(lr=lr_schedule(0), beta_1=beta_1, beta_2=beta_2, clipnorm=clipnorm)
-                )
+    for beta_1 in np.linspace(1-2e-1, 1-1e-3, 10):
+        # for clipnorm in np.linspace(1e-3, 3., 2):
+        optimizer_options.append(
+            optimizers.Adam(beta_1=beta_1)
+        )
 
     # optimizer_options = ([
     #     optimizers.Adam(lr=lr_schedule(0), beta_1=0.5, beta_2=0.5, clipnorm=0.001),  # 0
@@ -89,9 +88,9 @@ def main():
 
     output_checkpoint_inputs = [
         "zero one two",
-        "three four five",
-        "six seven eight",
-        "nine",
+        # "three four five",
+        # "six seven eight",
+        # "nine",
     ]
 
     try:
@@ -106,6 +105,7 @@ def main():
             output_checkpoint_inputs=output_checkpoint_inputs)
             # output_checkpoint_inputs = None)
     except Exception:
+        print("ERROR!!")
         traceback.print_exc()
 
 
