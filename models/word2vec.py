@@ -24,8 +24,8 @@ class Word2Vec:
         self.model = None
         self.useNorm = False
         self.model_path = '{}/../tmp/word2vec_300.bin'.format(os.path.dirname(os.path.realpath(__file__)))
-        # self.url = "http://www.robertoderesu.com/ml/word2vec/word-vec"
-        self.url = "http://127.0.0.1:8001/word-vec"
+        self.url = "http://www.robertoderesu.com/ml/word2vec/word-vec"
+        # self.url = "http://127.0.0.1:8001/word-vec"
         self.tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
 
     def get_embeddings(self, texts, print_every=None):
