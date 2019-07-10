@@ -12,5 +12,5 @@ def dump(data, file_path, indent=4):
         json.dump(data, f, indent=indent)
 
 
-def dumps(data, indent=4):
-    return json.dumps(data, indent=indent)
+def dumps(data, indent=4, sort_keys=False):
+    return json.dumps(data, indent=indent, sort_keys=sort_keys)

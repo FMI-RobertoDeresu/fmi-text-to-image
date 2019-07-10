@@ -36,11 +36,10 @@ def lr_schedule(epoch):
 
 def main():
     optimizer_options = []
-    for beta_1 in np.linspace(1e-3, 1 - 1e-3, 10):
-        for clipnorm in np.linspace(1e-3, 5., 3):
-            optimizer_options.append(
-                optimizers.Adam(beta_1=beta_1, clipnorm=clipnorm)
-            )
+    for clipnorm in np.linspace(5., 10., 2):
+        optimizer_options.append(
+            optimizers.Adam(clipnorm=clipnorm)
+        )
     # optimizer_options = ([
     #     optimizers.Adam(lr=lr_schedule(0), beta_1=0.5, beta_2=0.5, clipnorm=0.001),  # 0
     # ])
@@ -50,7 +49,8 @@ def main():
     ])
 
     batch_size_options = ([
-        256,  # 0
+        128,  # 0
+        256,  # 1
     ])
 
     args = parser.parse_args()
@@ -102,7 +102,7 @@ def main():
             out_folder=out_folder,
             lr_schedule=None,
             output_checkpoint_inputs=output_checkpoint_inputs)
-            # output_checkpoint_inputs = None)
+        # output_checkpoint_inputs = None)
     except Exception:
         print("ERROR!!")
         traceback.print_exc()
