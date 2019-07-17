@@ -36,7 +36,7 @@ def lr_schedule(epoch):
 
 def main():
     optimizer_options = []
-    for clipnorm in np.linspace(5., 10., 2):
+    for clipnorm in np.linspace(0.1, 10., 3):
         optimizer_options.append(
             optimizers.Adam(clipnorm=clipnorm)
         )
