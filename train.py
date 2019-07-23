@@ -20,29 +20,10 @@ parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 
-def lr_schedule(epoch):
-    lr = 2e-3
-    if epoch > 180:
-        lr *= 0.5e-3
-    elif epoch > 160:
-        lr *= 1e-3
-    elif epoch > 120:
-        lr *= 1e-2
-    elif epoch > 80:
-        lr *= 1e-1
-    print('Learning rate: ', lr)
-    return lr
-
-
 def main():
-    optimizer_options = []
-    for clipnorm in np.linspace(0.1, 10., 3):
-        optimizer_options.append(
-            optimizers.Adam(clipnorm=clipnorm)
-        )
-    # optimizer_options = ([
-    #     optimizers.Adam(lr=lr_schedule(0), beta_1=0.5, beta_2=0.5, clipnorm=0.001),  # 0
-    # ])
+    optimizer_options = ([
+        optimizers.Adam(clipnorm=10.),  # 0
+    ])
 
     loss_options = ([
         losses.mean_squared_error,  # 0
@@ -51,6 +32,8 @@ def main():
     batch_size_options = ([
         128,  # 0
         256,  # 1
+        512,  # 2
+        1024,  # 3
     ])
 
     args = parser.parse_args()
