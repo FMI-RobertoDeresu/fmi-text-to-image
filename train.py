@@ -22,9 +22,9 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 
 def main():
     optimizer_options = ([
-        optimizers.Adam(lr=1e-3, clipnorm=10.),  # 0
-        optimizers.Adam(lr=2e-3, clipnorm=10.),  # 0
-        optimizers.Adam(lr=1e-2, clipnorm=10.),  # 0
+        optimizers.Adam(lr=1e-4, clipnorm=10.),  # 0
+        optimizers.Adam(lr=5e-4, clipnorm=10.),  # 1
+        optimizers.Adam(lr=1e-3, clipnorm=10.),  # 2
     ])
 
     loss_options = ([
@@ -32,8 +32,7 @@ def main():
     ])
 
     batch_size_options = ([
-        1024,  # 0
-        2048,  # 1
+        2048,  # 0
     ])
 
     args = parser.parse_args()
@@ -70,9 +69,9 @@ def main():
 
     output_checkpoint_inputs = [
         "zero one two",
-        # "three four five",
-        # "six seven eight",
-        # "nine",
+        "three four five",
+        "six seven eight",
+        "nine",
     ]
 
     try:
