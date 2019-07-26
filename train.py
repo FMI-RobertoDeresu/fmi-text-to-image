@@ -16,15 +16,35 @@ parser.add_argument("-dataset", help="dataset name", default="mnist30k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
+parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=int, default=0)
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 
+lr_schedule_params = [
+    [0.1, 0.08, 0.05, 0.01, 0.005, 0.001],
+    [0.01, 0.008, 0.005, 0.001, 0.0005, 0.0001],
+]
+
+
+def lr_schedule(epoch, schedule):
+    if epoch == 0:
+        return schedule[0]
+    elif epoch < 10:
+        return schedule[1]
+    elif epoch < 30:
+        return schedule[2]
+    elif epoch < 60:
+        return schedule[3]
+    elif epoch < 100:
+        return schedule[4]
+    else:
+        return schedule[5]
+
+
 def main():
     optimizer_options = ([
-        optimizers.Adam(lr=1e-4, clipnorm=10.),  # 0
-        optimizers.Adam(lr=5e-4, clipnorm=10.),  # 1
-        optimizers.Adam(lr=1e-3, clipnorm=10.),  # 2
+        optimizers.Adam(clipnorm=10.),  # 0
     ])
 
     loss_options = ([
@@ -33,6 +53,11 @@ def main():
 
     batch_size_options = ([
         2048,  # 0
+    ])
+
+    lr_schedule_options = ([
+        lambda epoch, lr: lr_schedule(epoch, lr_schedule_params[0]),  # 0
+        lambda epoch, lr: lr_schedule(epoch, lr_schedule_params[1]),  # 1
     ])
 
     args = parser.parse_args()
@@ -63,6 +88,7 @@ def main():
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]
+    lr_schedule_fn = lr_schedule_options[args.lr_schedule_fn_index]
 
     desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
     print("\n\n" + desc)
@@ -82,7 +108,7 @@ def main():
             y=y,
             batch_size=batch_size,
             out_folder=out_folder,
-            lr_schedule=None,
+            lr_schedule=lr_schedule_fn,
             output_checkpoint_inputs=output_checkpoint_inputs)
         # output_checkpoint_inputs = None)
     except Exception:
