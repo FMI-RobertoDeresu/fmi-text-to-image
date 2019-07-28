@@ -22,7 +22,6 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 
 
 lr_schedule_params = [
-    [0.005, 0.002, 0.001, 0.0005, 0.0002, 0.0001],
     [0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
 ]
 
