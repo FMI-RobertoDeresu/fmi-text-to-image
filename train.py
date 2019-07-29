@@ -23,6 +23,7 @@ parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default
 
 lr_schedule_params = [
     [0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
+    [0.005, 0.005, 0.005, 0.005, 0.005, 0.005],
 ]
 
 
@@ -44,6 +45,7 @@ def lr_schedule(epoch, schedule):
 def main():
     optimizer_options = ([
         optimizers.Adam(clipnorm=10.),  # 0
+        optimizers.Adam(clipnorm=5.),  # 0
     ])
 
     loss_options = ([
@@ -51,6 +53,7 @@ def main():
     ])
 
     batch_size_options = ([
+        1024,  # 0
         2048,  # 0
     ])
 
