@@ -110,12 +110,7 @@ def main():
     desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
     print("\n\n" + desc)
 
-    output_checkpoint_inputs = [
-        "zero one two",
-        "three four five",
-        "six seven eight",
-        "nine",
-    ]
+    output_checkpoint_inputs = const.OUTPUT_CHECKPOINT_INPUTS[args.dataset]
 
     try:
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)

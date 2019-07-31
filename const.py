@@ -12,3 +12,16 @@ DATASETS_PATH = {
 
 INPUT_SHAPE = (30, 300, 1)
 OUTPUT_IMAGE_SIZE = (128, 128)
+
+OUTPUT_CHECKPOINT_INPUTS = {
+    "mnist30k": [
+        "zero one two",
+        "three four five",
+        "six seven eight"
+    ],
+    "flowers": [
+        "flower is blue and green in color",
+        "this flower is white and yellow",
+        "this flower has a long pointed red petal"
+    ]
+}
