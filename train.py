@@ -45,7 +45,6 @@ def lr_schedule(epoch, schedule):
 def main():
     optimizer_options = ([
         optimizers.Adam(clipnorm=10.),  # 0
-        optimizers.Adam(clipnorm=5.),  # 0
     ])
 
     loss_options = ([
@@ -54,7 +53,6 @@ def main():
 
     batch_size_options = ([
         1024,  # 0
-        2048,  # 0
     ])
 
     lr_schedule_options = ([
