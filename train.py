@@ -52,7 +52,7 @@ def main():
     ])
 
     batch_size_options = ([
-        1024,  # 0
+        512,  # 0
     ])
 
     lr_schedule_options = ([
