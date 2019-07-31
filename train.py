@@ -12,14 +12,14 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("-model", help="model name", default="cae")
 parser.add_argument("-model", help="model name", default="vae")
 # parser.add_argument("-dataset", help="dataset name", default="mnist1k")
-parser.add_argument("-dataset", help="dataset name", default="mnist30k")
+# parser.add_argument("-dataset", help="dataset name", default="mnist30k")
+parser.add_argument("-dataset", help="dataset name", default="flowers")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
 parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=int, default=0)
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
-
 
 lr_schedule_params = [
     [0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
@@ -67,19 +67,36 @@ def main():
     dataset_word2vec_captions = np.array(utils.pickle_utils.load(Path(dataset_dir, "word2vec-captions.bin")))
 
     data = []
+    max_input_shape = None
+    skipped = 0
     for meta_index, meta_entry in enumerate(dataset_meta):
         img_file_path = Path(dataset_dir, meta_entry["image"])
         img_array = mpimg.imread(str(img_file_path))
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
+            word2vec_captions = np.array(word2vec_captions)
+            # print("Input {}.".format(word2vec_captions.shape))
+
+            if word2vec_captions.shape[0] == 0:
+                skipped += 1
+                continue
+
             if word2vec_captions.shape[0] > const.INPUT_SHAPE[0]:
-                raise Exception("input range exceded")
+                print("Input range exceded {}.".format(word2vec_captions.shape))
+                if max_input_shape is None or max_input_shape[0] < word2vec_captions.shape[0]:
+                    max_input_shape = word2vec_captions.shape
+                word2vec_captions = word2vec_captions[:const.INPUT_SHAPE[0]]
 
             padding = ((0, const.INPUT_SHAPE[0] - word2vec_captions.shape[0]), (0, 0))
+            # print("Padding {}.".format(padding))
+
             word2vec_captions = np.pad(word2vec_captions, padding, 'constant', constant_values=0)
             word2vec_captions = (word2vec_captions.astype("float32") + 1.) / 2.
 
             data.append((word2vec_captions, img_array))
+
+    print("Max input shape {}".format(max_input_shape))
+    print("Skipped {}".format(skipped))
 
     x, y = tuple(zip(*data[:]))
     x, y = (np.expand_dims(x, 4), np.array(y))

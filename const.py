@@ -10,5 +10,5 @@ DATASETS_PATH = {
     "coco": str(Path("./datasets/coco-train-2014")),
 }
 
-INPUT_SHAPE = (3, 300, 1)
+INPUT_SHAPE = (30, 300, 1)
 OUTPUT_IMAGE_SIZE = (128, 128)
