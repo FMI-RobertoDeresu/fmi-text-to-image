@@ -4,6 +4,7 @@ from tf_imports import EarlyStopping, LearningRateScheduler
 from abc import ABC, abstractmethod
 from tf_imports import tf, K, multi_gpu_model, tf_summary
 from callbacks import OutputCheckpoint, TensorBoard2
+from keras.utils import plot_model
 
 
 class BaseModel(ABC):
@@ -40,6 +41,14 @@ class BaseModel(ABC):
     @abstractmethod
     def _create_model(self, input_shape):
         pass
+
+    @abstractmethod
+    def plot_model(self, save_to_dir):
+        pass
+
+    def _plot_model(self, model, file_path):
+        plot_model(model, to_file=file_path, show_shapes=True, show_layer_names=True)
+        print(model.summary())
 
     def compile(self, optimizer, loss):
         if self.model_compiled:

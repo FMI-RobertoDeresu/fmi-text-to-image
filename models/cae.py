@@ -2,6 +2,7 @@ from tf_imports import Model
 from tf_imports import Input, Dropout, Flatten, Dense, Reshape
 from tf_imports import Conv2D, MaxPooling2D, Conv2DTranspose
 from models.base_model import BaseModel
+from pathlib import Path
 
 
 class CAE(BaseModel):
@@ -10,11 +11,11 @@ class CAE(BaseModel):
 
     def _create_model(self, input_shape):
         # N, M, _ = input_shape
-        # input
-        input_layer = Input(shape=input_shape)  # (N, M, 1)
 
         # encoder
-        encoder = Conv2D(2, 3, padding='same', activation='relu')(input_layer)  # (N, M, 2)
+        encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
+
+        encoder = Conv2D(2, 3, padding='same', activation='relu')(encoder_inputs)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
         encoder = Conv2D(4, 3, padding='same', activation='relu')(encoder)  # (N/2 , M/2, 4)
@@ -46,8 +47,12 @@ class CAE(BaseModel):
         encoder = Dropout(0.1)(encoder)  # (1024)
         encoder = Dense(512)(encoder)  # (512)
 
+        encoder = Model(inputs=encoder_inputs, outputs=encoder, name="encoder")
+
         # decoder
-        decoder = Reshape((1, 1, 512))(encoder)  # (1, 1, 512)
+        decoder_inputs = Input(shape=encoder.output_shape[1:], name="decoder_input")
+
+        decoder = Reshape((1, 1, 512))(decoder_inputs)  # (1, 1, 512)
         decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='relu')(decoder)  # (2, 2, 512)
         decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='relu')(decoder)  # (4, 4, 256)
         decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
@@ -57,8 +62,14 @@ class CAE(BaseModel):
         decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
         decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128, 3)
 
+        decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
+
         # CAE model
-        model = Model(inputs=input_layer, outputs=decoder)
+        cae_outputs = decoder(encoder(encoder_inputs))
+        model = Model(inputs=encoder_inputs, outputs=cae_outputs, name='cae')
+
+        self.model_encoder = encoder
+        self.model_decoder = decoder
 
         return model
 
@@ -70,3 +81,8 @@ class CAE(BaseModel):
         self.loss = loss
         self.model.compile(optimizer=optimizer, loss=loss, metrics=[])
         self.model_compiled = True
+
+    def plot_model(self, save_to_dir):
+        self._plot_model(self.model, str(Path(save_to_dir, "cae.png")))
+        self._plot_model(self.model_encoder, str(Path(save_to_dir, "cae_encoder.png")))
+        self._plot_model(self.model_decoder, str(Path(save_to_dir, "cae_decoder.png")))

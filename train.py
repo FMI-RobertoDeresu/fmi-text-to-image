@@ -9,11 +9,11 @@ from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
 
 parser = argparse.ArgumentParser()
-# parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-model", help="model name", default="vae")
-# parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+parser.add_argument("-model", help="model name", default="cae")
+# parser.add_argument("-model", help="model name", default="vae")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 # parser.add_argument("-dataset", help="dataset name", default="mnist30k")
-parser.add_argument("-dataset", help="dataset name", default="flowers")
+# parser.add_argument("-dataset", help="dataset name", default="flowers")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
@@ -75,8 +75,6 @@ def main():
 
         for word2vec_captions in dataset_word2vec_captions[meta_index]:
             word2vec_captions = np.array(word2vec_captions)
-            # print("Input {}.".format(word2vec_captions.shape))
-
             if word2vec_captions.shape[0] == 0:
                 skipped += 1
                 continue
@@ -88,8 +86,6 @@ def main():
                 word2vec_captions = word2vec_captions[:const.INPUT_SHAPE[0]]
 
             padding = ((0, const.INPUT_SHAPE[0] - word2vec_captions.shape[0]), (0, 0))
-            # print("Padding {}.".format(padding))
-
             word2vec_captions = np.pad(word2vec_captions, padding, 'constant', constant_values=0)
             word2vec_captions = (word2vec_captions.astype("float32") + 1.) / 2.
 
@@ -113,6 +109,8 @@ def main():
     output_checkpoint_inputs = const.OUTPUT_CHECKPOINT_INPUTS[args.dataset]
 
     try:
+        # model.plot_model(str(Path("tmp/plot")))
+        # return
         out_folder = "tmp/train/{}/{}".format(args.model, args.dataset)
         model.compile(optimizer, loss)
         model.train(
@@ -122,7 +120,6 @@ def main():
             out_folder=out_folder,
             lr_schedule=lr_schedule_fn,
             output_checkpoint_inputs=output_checkpoint_inputs)
-        # output_checkpoint_inputs = None)
     except Exception:
         print("ERROR!!")
         traceback.print_exc()

@@ -1,8 +1,9 @@
 import const
 from models.base_model import BaseModel
 from tf_imports import K, Model, Lambda
-from tf_imports import Input, Dropout, Flatten, Dense, Reshape
-from tf_imports import Conv2D, MaxPooling2D, Conv2DTranspose
+from tf_imports import Input, Flatten, Dense, Reshape
+from tf_imports import Conv2D, Conv2DTranspose
+from pathlib import Path
 
 
 class VAE(BaseModel):
@@ -49,6 +50,9 @@ class VAE(BaseModel):
         vae_outputs = decoder(encoder(encoder_inputs)[2])
         vae = Model(inputs=encoder_inputs, outputs=vae_outputs, name='vae')
 
+        self.model_encoder = encoder
+        self.model_decoder = decoder
+
         self.z_mean = z_mean
         self.z_log_var = z_log_var
 
@@ -74,6 +78,11 @@ class VAE(BaseModel):
 
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         return vae_loss
+
+    def plot_model(self, save_to_dir):
+        self._plot_model(self.model, str(Path(save_to_dir, "vae.png")))
+        self._plot_model(self.model_encoder, str(Path(save_to_dir, "vae_encoder.png")))
+        self._plot_model(self.model_decoder, str(Path(save_to_dir, "vae_decoder.png")))
 
     # reparameterization trick (instead of sampling from Q(z|X), sample eps = N(0,I))
     @staticmethod

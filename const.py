@@ -14,6 +14,11 @@ INPUT_SHAPE = (30, 300, 1)
 OUTPUT_IMAGE_SIZE = (128, 128)
 
 OUTPUT_CHECKPOINT_INPUTS = {
+    "mnist1k": [
+        "zero one two",
+        "three four five",
+        "six seven eight"
+    ],
     "mnist30k": [
         "zero one two",
         "three four five",
