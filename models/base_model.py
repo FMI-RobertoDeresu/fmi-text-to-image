@@ -78,7 +78,7 @@ class BaseModel(ABC):
         early_stopping = EarlyStopping(
             monitor='val_loss',
             min_delta=0.01,
-            patience=20,
+            patience=30,
             verbose=1,
             mode='min',
             restore_best_weights=True)
