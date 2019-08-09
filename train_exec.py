@@ -22,7 +22,7 @@ def main():
 
     for optimizer, loss, batch_size, lr_schedule_fn in \
             itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes, lr_schedule_fn_indexes):
-        for _ in range(5):
+        for _ in range(10):
             try:
                 subproc_args = [
                     "python", "train.py",
