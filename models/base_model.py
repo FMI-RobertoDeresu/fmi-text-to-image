@@ -3,7 +3,7 @@ from pathlib import Path
 from tf_imports import EarlyStopping, LearningRateScheduler
 from abc import ABC, abstractmethod
 from tf_imports import tf, K, multi_gpu_model, tf_summary
-from callbacks import OutputCheckpoint, TensorBoard2
+from callbacks import OutputCheckpoint, TensorBoard2, CheckNanLoss
 from keras.utils import plot_model
 
 
@@ -84,6 +84,9 @@ class BaseModel(ABC):
             restore_best_weights=True)
         callbacks.append(early_stopping)
 
+        check_nan = CheckNanLoss('val_loss')
+        callbacks.append(check_nan)
+
         if lr_schedule is not None:
             learning_rate_scheduler = LearningRateScheduler(lr_schedule)
             callbacks.append(learning_rate_scheduler)
@@ -109,7 +112,6 @@ class BaseModel(ABC):
             y=y,
             batch_size=batch_size,
             epochs=300,
-            # epochs=8,
             verbose=1,
             shuffle=True,
             callbacks=callbacks,

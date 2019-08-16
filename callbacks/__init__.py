@@ -1,2 +1,3 @@
 from callbacks.output_checkpoint import OutputCheckpoint
 from callbacks.tensorboard2 import TensorBoard2
+from callbacks.check_nan_loss import CheckNanLoss

@@ -56,14 +56,14 @@ class CAE(BaseModel):
         decoder_inputs = Input(shape=encoder.output_shape[1:], name="decoder_input")
 
         decoder = Reshape((1, 1, 512))(decoder_inputs)  # (1, 1, 512)
-        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='relu')(decoder)  # (2, 2, 512)
-        decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='relu')(decoder)  # (4, 4, 256)
-        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
-        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
-        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='relu')(decoder)  # (32, 32, 32)
-        decoder = Conv2DTranspose(16, 3, strides=2, padding='same', activation='relu')(decoder)  # (64, 64, 16)
-        decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
-        decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='relu')(decoder)  # (128, 128, 3)
+        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='elu')(decoder)  # (2, 2, 512)
+        decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='elu')(decoder)  # (4, 4, 256)
+        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='elu')(decoder)  # (8, 8, 128)
+        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='elu')(decoder)  # (16, 16, 64)
+        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='elu')(decoder)  # (32, 32, 32)
+        decoder = Conv2DTranspose(16, 3, strides=2, padding='same', activation='elu')(decoder)  # (64, 64, 16)
+        decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='elu')(decoder)  # (128, 128, 8)
+        decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='sigmoid')(decoder)  # (128, 128, 3)
 
         decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 

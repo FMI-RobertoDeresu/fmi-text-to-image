@@ -15,7 +15,7 @@ class TensorBoard2(TensorBoard):
         pass
 
     def on_train_begin(self, logs=None):
-        optimizer_config = { "name":self.model.optimizer.__class__.__name__}
+        optimizer_config = {"name": self.model.optimizer.__class__.__name__}
         optimizer_config.update(self.model.optimizer.get_config())
         optimizer_config_json = utils.json_utils.dumps(optimizer_config, sort_keys=True)
         optimizer_config_tensor = tf.convert_to_tensor(optimizer_config_json)
