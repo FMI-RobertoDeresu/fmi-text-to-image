@@ -15,9 +15,10 @@ class CAE(BaseModel):
 
         # encoder
         encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
-        encoder_inputs = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)
 
-        encoder = Conv2D(2, 3, padding='same', activation='relu')(encoder_inputs)  # (N, M, 2)
+        encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)  # (N, M, 1)
+
+        encoder = Conv2D(2, 3, padding='same', activation='relu')(encoder)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)
 
         encoder = Conv2D(4, 3, padding='same', activation='relu')(encoder)  # (N/2 , M/2, 4)
