@@ -1,8 +1,9 @@
 from tf_imports import Model
-from tf_imports import Input, Dropout, Flatten, Dense, Reshape
+from tf_imports import Input, Dropout, Flatten, Dense, Reshape, GaussianNoise
 from tf_imports import Conv2D, MaxPooling2D, Conv2DTranspose
 from models.base_model import BaseModel
 from pathlib import Path
+import const
 
 
 class CAE(BaseModel):
@@ -14,6 +15,7 @@ class CAE(BaseModel):
 
         # encoder
         encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
+        encoder_inputs = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)
 
         encoder = Conv2D(2, 3, padding='same', activation='relu')(encoder_inputs)  # (N, M, 2)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/2 , M/2, 2)

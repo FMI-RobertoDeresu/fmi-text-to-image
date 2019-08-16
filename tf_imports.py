@@ -7,7 +7,8 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose
     # noinspection PyUnresolvedReferences
-    from tensorflow.contrib.keras.api.keras.layers import Dropout, Flatten, Dense, Reshape, Lambda
+    from tensorflow.contrib.keras.api.keras.layers import Dropout, Flatten, Dense, Reshape, Lambda, GaussianNoise
+    # noinspection PyUnresolvedReferences
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.models import Model
     # noinspection PyUnresolvedReferences
@@ -22,7 +23,7 @@ else:
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose
     # noinspection PyUnresolvedReferences
-    from tensorflow.keras.layers import Dropout, Flatten, Dense, Reshape, Lambda
+    from tensorflow.keras.layers import Dropout, Flatten, Dense, Reshape, Lambda, GaussianNoise
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.models import Model
     # noinspection PyUnresolvedReferences

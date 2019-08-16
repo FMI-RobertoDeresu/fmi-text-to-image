@@ -1,7 +1,7 @@
 import const
 from models.base_model import BaseModel
 from tf_imports import K, Model, Lambda
-from tf_imports import Input, Flatten, Dense, Reshape
+from tf_imports import Input, Flatten, Dense, Reshape, GaussianNoise
 from tf_imports import Conv2D, Conv2DTranspose
 from pathlib import Path
 
@@ -16,6 +16,7 @@ class VAE(BaseModel):
         # VAE model = encoder + decoder
         # build encoder model
         encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
+        encoder_inputs = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)
 
         encoder = Conv2D(32, 3, activation='relu', strides=2, padding='same')(encoder_inputs)  # (N/2 , M/2, 32)
         encoder = Conv2D(64, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/4 , M/4, 64)

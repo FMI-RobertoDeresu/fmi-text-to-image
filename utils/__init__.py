@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from utils.stopwords import stopwords
 from utils import json_utils, pickle_utils, plot_utils
 
 
