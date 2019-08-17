@@ -79,10 +79,11 @@ def main():
                 skipped += 1
                 continue
 
+            if max_input_shape is None or max_input_shape[0] < word2vec_captions.shape[0]:
+                max_input_shape = word2vec_captions.shape
+
             if word2vec_captions.shape[0] > const.INPUT_SHAPE[0]:
                 print("Input range exceded {}.".format(word2vec_captions.shape))
-                if max_input_shape is None or max_input_shape[0] < word2vec_captions.shape[0]:
-                    max_input_shape = word2vec_captions.shape
                 word2vec_captions = word2vec_captions[:const.INPUT_SHAPE[0]]
 
             padding = ((0, const.INPUT_SHAPE[0] - word2vec_captions.shape[0]), (0, 0))
