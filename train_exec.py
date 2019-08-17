@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-model", help="model name", default="vae")
 # parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-dataset", help="dataset name", default="mnist30k")
-parser.add_argument("-trainigs", help="number of trainings", default="3")
+parser.add_argument("-trainings", help="number of trainings", default="3")
 parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
@@ -23,7 +23,7 @@ def main():
 
     for optimizer, loss, batch_size, lr_schedule_fn in \
             itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes, lr_schedule_fn_indexes):
-        for _ in range(int(args.trainigs)):
+        for _ in range(int(args.trainings)):
             try:
                 subproc_args = [
                     "python", "train.py",
