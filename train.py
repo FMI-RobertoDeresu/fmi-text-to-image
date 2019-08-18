@@ -20,30 +20,27 @@ parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
 parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=int, default=0)
 
-lr_schedule_params = [
-    [0.001] * 6,
-    [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
-]
 
+def lr_schedule(epoch, lr):
+    coef = 1
+    if epoch % 80 == 0:
+        coef = 32
+    elif epoch % 40 == 0:
+        coef = 16
+    elif epoch % 20 == 0:
+        coef = 8
+    elif epoch % 10 == 0:
+        coef = 4
+    elif epoch % 5 == 0:
+        coef = 2
 
-def lr_schedule(epoch, schedule):
-    if epoch == 0:
-        return schedule[0]
-    elif epoch < 10:
-        return schedule[1]
-    elif epoch < 30:
-        return schedule[2]
-    elif epoch < 60:
-        return schedule[3]
-    elif epoch < 100:
-        return schedule[4]
-    else:
-        return schedule[5]
+    print("\nLr. coef: {}".format(coef))
+    return lr * coef
 
 
 def main():
     optimizer_options = ([
-        optimizers.Adam(clipnorm=10., beta_1=0.5),  # 0
+        optimizers.Adam(lr=0.001, beta_1=0.5, clipnorm=10.),  # 0
     ])
 
     loss_options = ([
@@ -55,7 +52,7 @@ def main():
     ])
 
     lr_schedule_options = ([
-        lambda epoch, lr: lr_schedule(epoch, lr_schedule_params[0]),  # 0
+        lr_schedule,  # 0
     ])
 
     args = parser.parse_args()
