@@ -58,7 +58,7 @@ class BaseModel(ABC):
 
         early_stopping = EarlyStopping(
             monitor='val_loss',
-            min_delta=0.1,
+            min_delta=0.05,
             patience=20,
             verbose=1,
             mode='min',
@@ -79,8 +79,9 @@ class BaseModel(ABC):
         if output_checkpoint_inputs_word2vec is not None:
             output_checkpoint = OutputCheckpoint(
                 tensor_board_writer=tensor_board_writer,
-                inputs_word2vec=output_checkpoint_inputs_word2vec,
-                print_every=30)
+                validation_data = (x[:4], y[:4]),
+                test_data_input_word2vec=output_checkpoint_inputs_word2vec,
+                print_every=50)
             callbacks.append(output_checkpoint)
 
         # last because close the writer on training end

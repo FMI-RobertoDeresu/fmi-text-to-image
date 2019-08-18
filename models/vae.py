@@ -79,6 +79,7 @@ class VAE(BaseModel):
         reconstruction_loss = self.reconstruction_loss(K.flatten(y_true), K.flatten(y_pred))
         kl_loss = self._kl_loss(y_true, y_pred)
         vae_loss = K.mean(kl_loss + reconstruction_loss)
+
         return vae_loss
 
     def plot_model(self, save_to_dir):
