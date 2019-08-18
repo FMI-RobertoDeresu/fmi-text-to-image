@@ -23,15 +23,15 @@ parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=i
 
 def lr_schedule(epoch, lr):
     coef = 1
-    if epoch % 80 == 0:
+    if epoch < 10 == 0:
         coef = 32
-    elif epoch % 40 == 0:
+    elif epoch < 20 == 0:
         coef = 16
-    elif epoch % 20 == 0:
+    elif epoch < 40 == 0:
         coef = 8
-    elif epoch % 10 == 0:
+    elif epoch % 8 == 0:
         coef = 4
-    elif epoch % 5 == 0:
+    elif epoch % 4 == 0:
         coef = 2
 
     print("\nLr. coef: {}".format(coef))
