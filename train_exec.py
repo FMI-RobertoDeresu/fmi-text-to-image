@@ -4,13 +4,11 @@ import argparse
 import subprocess
 
 parser = argparse.ArgumentParser()
-# parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-model", help="model name", default="vae")
-# parser.add_argument("-dataset", help="dataset name", default="mnist1k")
-parser.add_argument("-dataset", help="dataset name", default="mnist30k")
-parser.add_argument("-trainings", help="number of trainings", default="3")
-parser.add_argument("-use-tpu", help="use tpu", action="store_true")
-parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
+parser.add_argument("-model", help="model name", default="cae")
+# parser.add_argument("-model", help="model name", default="vae")
+parser.add_argument("-dataset", help="dataset name", default="mnist1k")
+# parser.add_argument("-dataset", help="dataset name", default="mnist30k")
+parser.add_argument("-trainings", help="number of trainings", default="1")
 
 
 def main():
@@ -34,12 +32,6 @@ def main():
                     "-batch-size-index", str(batch_size),
                     "-lr-schedule-fn-index", str(lr_schedule_fn)
                 ]
-
-                if args.use_tpu:
-                    subproc_args.extend(["-use-tpu"])
-
-                if args.gpus is not None:
-                    subproc_args.extend(["-gpus", str(args.gpus)])
 
                 retcode = subprocess.call(subproc_args)
                 print("Code={}".format(retcode))

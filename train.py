@@ -19,13 +19,10 @@ parser.add_argument("-optimizer-index", help="optimizer index", type=int, defaul
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
 parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=int, default=0)
-parser.add_argument("-use-tpu", help="use tpu", action="store_true")
-parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 lr_schedule_params = [
     [0.0002] * 6,
-    [0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
-    [0.005, 0.005, 0.005, 0.005, 0.005, 0.005],
+    [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
 ]
 
 
@@ -59,7 +56,6 @@ def main():
 
     lr_schedule_options = ([
         lambda epoch, lr: lr_schedule(epoch, lr_schedule_params[0]),  # 0
-        lambda epoch, lr: lr_schedule(epoch, lr_schedule_params[1]),  # 1
     ])
 
     args = parser.parse_args()
@@ -100,7 +96,7 @@ def main():
     x, y = tuple(zip(*data[:]))
     x, y = (np.expand_dims(x, 4), np.array(y))
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE, args.use_tpu, args.gpus)
+    model = models.models_dict[args.model](const.INPUT_SHAPE)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]

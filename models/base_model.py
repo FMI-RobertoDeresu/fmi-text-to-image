@@ -8,32 +8,13 @@ from keras.utils import plot_model
 
 
 class BaseModel(ABC):
-    def __init__(self, input_shape, use_tpu=False, gpus=None):
-        if use_tpu and gpus > 0:
-            raise Exception("If tpus are used, gpus must be 0.")
-
-        if gpus is not None and gpus < 2:
-            raise Exception("If gpus is specified, then it must be and integer >= 2.")
-
+    def __init__(self, input_shape):
         self.input_shape = input_shape
         self.optimizer = None
         self.loss = None
 
         model = self._create_model(input_shape)
         # model.summary()
-
-        # model as tpu
-        if use_tpu:
-            model = tf.contrib.tpu.keras_to_tpu_model(
-                model,
-                strategy=tf.contrib.tpu.TPUDistributionStrategy(
-                    tf.contrib.cluster_resolver.TPUClusterResolver(tpu='demo-tpu')
-                )
-            )
-
-        # model as gpu
-        if (gpus or 0) > 1:
-            model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
 
         self.model = model
         self.model_compiled = False

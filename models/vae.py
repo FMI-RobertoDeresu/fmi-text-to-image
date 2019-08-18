@@ -7,8 +7,8 @@ from pathlib import Path
 
 
 class VAE(BaseModel):
-    def __init__(self, input_shape, use_tpu=False, gpus=None):
-        super().__init__(input_shape, use_tpu, gpus)
+    def __init__(self, input_shape):
+        super().__init__(input_shape)
 
     def _create_model(self, input_shape):
         latent_dim = 2
