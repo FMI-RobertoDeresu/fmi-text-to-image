@@ -21,7 +21,7 @@ parser.add_argument("-batch-size-index", help="batch size index", type=int, defa
 parser.add_argument("-lr-schedule-fn-index", help="lr schedule fn index", type=int, default=0)
 
 lr_schedule_params = [
-    [0.0002] * 6,
+    [0.001] * 6,
     [0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
 ]
 
