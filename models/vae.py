@@ -37,14 +37,12 @@ class VAE(BaseModel):
         # decoder
         decoder_inputs = Input(shape=(latent_dim,), name='z_sampling')  # (2)
 
-        decoder = Dense(4096, activation='relu')(decoder_inputs)  # (4096)
+        decoder = Dense(4096, activation='elu')(decoder_inputs)  # (4096)
         decoder = Reshape((4, 4, 256))(decoder)  # (4, 4, 256)
-        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
-        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
-        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='relu')(decoder)  # (32, 32, 32)
-        decoder = Conv2DTranspose(16, 3, strides=2, padding='same', activation='relu')(decoder)  # (64, 64, 16)
-        decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='relu')(decoder)  # (128, 128, 8)
-        decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='sigmoid')(decoder)  # (128, 128, 3)
+        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='elu')(decoder)  # (8, 8, 128)
+        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='elu')(decoder)  # (16, 16, 64)
+        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='elu')(decoder)  # (32, 32, 32)
+        decoder = Conv2DTranspose(3, 3, strides=2, padding='same', activation='sigmoid')(decoder)  # (64, 64, 3)
 
         decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 
@@ -79,7 +77,6 @@ class VAE(BaseModel):
 
     def _loss(self, y_true, y_pred):
         reconstruction_loss = self.reconstruction_loss(K.flatten(y_true), K.flatten(y_pred))
-        reconstruction_loss *= const.OUTPUT_IMAGE_SIZE[0] * const.OUTPUT_IMAGE_SIZE[1]
         kl_loss = self._kl_loss(y_true, y_pred)
         vae_loss = K.mean(kl_loss + reconstruction_loss)
         return vae_loss

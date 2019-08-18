@@ -47,18 +47,18 @@ class CAE(BaseModel):
 
         encoder = Flatten()(encoder)  # (512)
         encoder = Dropout(0.1)(encoder)  # (512)
-        encoder = Dense(512)(encoder)  # (512)
+        encoder = Dense(512, activation='tanh')(encoder)  # (512)
 
         encoder = Model(inputs=encoder_inputs, outputs=encoder, name="encoder")
 
         # decoder
         decoder_inputs = Input(shape=encoder.output_shape[1:], name="decoder_input")
 
-        decoder = Dense(4096)(decoder_inputs)
+        decoder = Dense(4096, activation="elu")(decoder_inputs)
         decoder = Reshape((4, 4, 256))(decoder)  # (4, 4, 256)
-        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
-        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
-        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='relu')(decoder)  # (32, 32, 32)
+        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='elu')(decoder)  # (8, 8, 128)
+        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='elu')(decoder)  # (16, 16, 64)
+        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='elu')(decoder)  # (32, 32, 32)
         decoder = Conv2DTranspose(3, 3, strides=2, padding='same', activation='sigmoid')(decoder)  # (64, 64, 3)
 
         decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
