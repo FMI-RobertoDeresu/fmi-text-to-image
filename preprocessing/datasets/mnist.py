@@ -23,7 +23,9 @@ letter_name = {
 
 (x_train, y_train), _ = tf.keras.datasets.mnist.load_data()
 
-n_samples = 10000
+n_samples = 1000
+img_size = (64, 64)
+
 rnd_index_list = np.random.randint(60000, size=(n_samples, 3))
 img_pad_with = 9 * (3 - 1)
 
@@ -40,7 +42,7 @@ for i, index_list in enumerate(rnd_index_list):
 
     img = Image.fromarray(image)
     img = img.convert("RGB")
-    img = img.resize((128, 128), Image.ANTIALIAS)
+    img = img.resize(img_size, Image.ANTIALIAS)
 
     image_file_name = "img_{}_{}.png".format(str((i+1)).rjust(4, "0"), "_".join(labels))
     image_file_path = Path(dataset_path, "images", image_file_name)

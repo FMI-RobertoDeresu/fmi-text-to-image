@@ -7,10 +7,11 @@ import numpy as np
 from pathlib import Path
 from matplotlib import image as mpimg
 from tf_imports import optimizers, losses
+from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
-# parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-model", help="model name", default="vae")
+parser.add_argument("-model", help="model name", default="cae")
+# parser.add_argument("-model", help="model name", default="vae")
 parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 # parser.add_argument("-dataset", help="dataset name", default="mnist30k")
 # parser.add_argument("-dataset", help="dataset name", default="flowers")
@@ -22,6 +23,7 @@ parser.add_argument("-use-tpu", help="use tpu", action="store_true")
 parser.add_argument("-gpus", help="number of gpus to use tpu", type=int, default=None)
 
 lr_schedule_params = [
+    [0.0002] * 6,
     [0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
     [0.005, 0.005, 0.005, 0.005, 0.005, 0.005],
 ]
@@ -44,7 +46,7 @@ def lr_schedule(epoch, schedule):
 
 def main():
     optimizer_options = ([
-        optimizers.Adam(clipnorm=10.),  # 0
+        optimizers.Adam(clipnorm=10., beta_1=0.5),  # 0
     ])
 
     loss_options = ([
@@ -52,7 +54,7 @@ def main():
     ])
 
     batch_size_options = ([
-        1024,  # 0
+        128,  # 0
     ])
 
     lr_schedule_options = ([
@@ -107,7 +109,12 @@ def main():
     desc = "{} {} {}".format(optimizer.__class__.__name__, loss.__name__, batch_size)
     print("\n\n" + desc)
 
-    output_checkpoint_inputs = const.OUTPUT_CHECKPOINT_INPUTS[args.dataset]
+    test_captions = const.OUTPUT_CHECKPOINT_INPUTS[args.dataset]
+    test_captions_word2vec = None
+    if test_captions is not None:
+        test_captions = [utils.prepare_caption_text_for_word2vec(x)[0] for x in test_captions]
+        test_captions_word2vec = np.array(Word2Vec.get_instance().get_embeddings_remote(test_captions))
+        test_captions_word2vec = utils.process_w2v_inputs(test_captions_word2vec, const.INPUT_SHAPE)
 
     try:
         # path = Path("tmp/plot")
@@ -123,7 +130,7 @@ def main():
             batch_size=batch_size,
             out_folder=out_folder,
             lr_schedule=lr_schedule_fn,
-            output_checkpoint_inputs=output_checkpoint_inputs)
+            output_checkpoint_inputs_word2vec=test_captions_word2vec)
     except Exception:
         print("ERROR!!")
         traceback.print_exc()

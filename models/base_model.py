@@ -60,7 +60,7 @@ class BaseModel(ABC):
     def _compile(self, optimizer, loss):
         pass
 
-    def train(self, x, y, batch_size, out_folder, lr_schedule=None, output_checkpoint_inputs=None):
+    def train(self, x, y, batch_size, out_folder, lr_schedule=None, output_checkpoint_inputs_word2vec=None):
         if not self.model_compiled:
             raise Exception("The model must be compiled first.")
 
@@ -95,11 +95,11 @@ class BaseModel(ABC):
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
         tensor_board_writer = tf_summary.FileWriter(str(tensor_board_log_dir), K.get_session().graph)
 
-        if output_checkpoint_inputs is not None:
+        if output_checkpoint_inputs_word2vec is not None:
             output_checkpoint = OutputCheckpoint(
                 tensor_board_writer=tensor_board_writer,
-                inputs=output_checkpoint_inputs,
-                print_every=10)
+                inputs_word2vec=output_checkpoint_inputs_word2vec,
+                print_every=30)
             callbacks.append(output_checkpoint)
 
         # last because close the writer on training end

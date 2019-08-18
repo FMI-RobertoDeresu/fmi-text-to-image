@@ -3,6 +3,7 @@ from PIL import Image
 from pathlib import Path
 
 resize = False
+resize_img_size = (64, 64)
 flowers_raw_dataset_path = Path("../../tmp/datasets/flowers")
 flowers_processed_dataset_path = Path("../../datasets/flowers")
 
@@ -28,7 +29,7 @@ for index, image_file_path in enumerate(image_files_paths):
 
     img = Image.open(str(image_file_path))
     if resize:
-        img = img.resize((128, 128), Image.ANTIALIAS)
+        img = img.resize(resize_img_size, Image.ANTIALIAS)
 
     new_file_path = Path(flowers_processed_dataset_path, "images", label_folder_name, image_file_path.name)
     new_file_path.parent.mkdir(parents=True, exist_ok=True)

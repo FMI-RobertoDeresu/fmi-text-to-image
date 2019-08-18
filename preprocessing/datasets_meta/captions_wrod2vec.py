@@ -15,10 +15,7 @@ def save_word2vec_captions(word2vec, dataset_name):
     max_no_of_word2vec_words = 0
     for index, meta_entry in enumerate(meta):
         for caption in meta_entry["captions"]:
-            captions_words = caption.split()
-            captions_words = list(filter(lambda x: x not in utils.stopwords, captions_words))
-            captions_words = list(filter(lambda x: len(x) > 2, captions_words))
-            caption = " ".join(captions_words)
+            caption, captions_words = utils.prepare_caption_text_for_word2vec(caption)
             meta_captions.append((index, caption))
 
             max_no_of_words = max(max_no_of_words, len(captions_words))
@@ -37,7 +34,7 @@ def save_word2vec_captions(word2vec, dataset_name):
     for index, caption_word2vec in zip(indexes, captions_word2vec):
         word2vec_captions[index].append(caption_word2vec)
 
-    word2vec_captions_bin_file_path = Path(dataset_path, "word2vec-captions-nostopwords.bin")
+    word2vec_captions_bin_file_path = Path(dataset_path, "word2vec-captions.bin")
     word2vec_captions_bin_file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(word2vec_captions_bin_file_path, 'wb') as f2:
         pickle.dump(word2vec_captions, f2)
@@ -52,7 +49,7 @@ def main():
         "cub-200-2011",
         "flickr30k",
         "coco-train-2014"
-    ])[2:3]
+    ])[0:1]
 
     word2vec = Word2Vec.get_instance()
     word2vec.load_model()

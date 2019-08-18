@@ -1,11 +1,22 @@
 import time
 import numpy as np
+import nltk
 from utils.stopwords import stopwords
 from utils import json_utils, pickle_utils, plot_utils
+
+tokenizer = nltk.tokenize.RegexpTokenizer(r"\w{3,}")
 
 
 def uid():
     return str(time.time()).replace(".", "").ljust(17, "0")
+
+
+def prepare_caption_text_for_word2vec(caption):
+    captions_words = tokenizer.tokenize(caption)
+    captions_words = list(filter(lambda x: x not in stopwords, captions_words))
+    captions_words = list(filter(lambda x: len(x) > 2, captions_words))
+    caption = " ".join(captions_words)
+    return caption, captions_words
 
 
 def process_w2v_inputs(word2vec_captions, input_shape):

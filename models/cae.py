@@ -46,8 +46,7 @@ class CAE(BaseModel):
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)  # (N/512 , M/512, 512)
 
         encoder = Flatten()(encoder)  # (512)
-        encoder = Dense(1024)(encoder)  # (1024)
-        encoder = Dropout(0.1)(encoder)  # (1024)
+        encoder = Dropout(0.1)(encoder)  # (512)
         encoder = Dense(512)(encoder)  # (512)
 
         encoder = Model(inputs=encoder_inputs, outputs=encoder, name="encoder")
@@ -55,15 +54,12 @@ class CAE(BaseModel):
         # decoder
         decoder_inputs = Input(shape=encoder.output_shape[1:], name="decoder_input")
 
-        decoder = Reshape((1, 1, 512))(decoder_inputs)  # (1, 1, 512)
-        decoder = Conv2DTranspose(512, 3, strides=2, padding='same', activation='elu')(decoder)  # (2, 2, 512)
-        decoder = Conv2DTranspose(256, 3, strides=2, padding='same', activation='elu')(decoder)  # (4, 4, 256)
-        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='elu')(decoder)  # (8, 8, 128)
-        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='elu')(decoder)  # (16, 16, 64)
-        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='elu')(decoder)  # (32, 32, 32)
-        decoder = Conv2DTranspose(16, 3, strides=2, padding='same', activation='elu')(decoder)  # (64, 64, 16)
-        decoder = Conv2DTranspose(8, 3, strides=2, padding='same', activation='elu')(decoder)  # (128, 128, 8)
-        decoder = Conv2DTranspose(3, 3, strides=1, padding='same', activation='sigmoid')(decoder)  # (128, 128, 3)
+        decoder = Dense(4096)(decoder_inputs)
+        decoder = Reshape((4, 4, 256))(decoder)  # (4, 4, 256)
+        decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='relu')(decoder)  # (8, 8, 128)
+        decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='relu')(decoder)  # (16, 16, 64)
+        decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='relu')(decoder)  # (32, 32, 32)
+        decoder = Conv2DTranspose(3, 3, strides=2, padding='same', activation='sigmoid')(decoder)  # (64, 64, 3)
 
         decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 
