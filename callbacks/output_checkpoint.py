@@ -2,10 +2,10 @@ from tf_imports import tf, K, Callback
 
 
 class OutputCheckpoint(Callback):
-    def __init__(self, tensor_board_writer, validation_data, test_data_input_word2vec, print_every=1):
+    def __init__(self, tensor_board_writer, val_data, test_data_input_word2vec, print_every=1):
         super().__init__()
         self.writer = tensor_board_writer
-        self.validation_data = validation_data
+        self.val_data = val_data
         self.test_data_input_word2vec = test_data_input_word2vec
         self.print_every = print_every
 
@@ -23,7 +23,7 @@ class OutputCheckpoint(Callback):
         self.log_validation_results()
 
     def log_validation_results(self):
-        x, y = self.validation_data
+        x, y = self.val_data
         summary = K.eval(tf.summary.image(name="eval_real", tensor=y[:4], max_outputs=4))
         self.writer.add_summary(summary, global_step=self.epoch)
 

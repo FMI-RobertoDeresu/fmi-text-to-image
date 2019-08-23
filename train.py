@@ -10,8 +10,8 @@ from tf_imports import optimizers, losses
 from models.word2vec import Word2Vec
 
 parser = argparse.ArgumentParser()
-# parser.add_argument("-model", help="model name", default="cae")
-parser.add_argument("-model", help="model name", default="vae")
+parser.add_argument("-model", help="model name", default="cae")
+# parser.add_argument("-model", help="model name", default="vae")
 parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 # parser.add_argument("-dataset", help="dataset name", default="mnist30k")
 # parser.add_argument("-dataset", help="dataset name", default="flowers")
@@ -35,7 +35,7 @@ def lr_schedule(epoch, lr):
         coef = 2
 
     print("\nLr. coef: {}".format(coef))
-    return lr * coef
+    return 0.001 * coef
 
 
 def main():

@@ -2,7 +2,6 @@ import os
 import requests
 import numpy
 import time
-import gensim
 import nltk
 
 
@@ -71,6 +70,7 @@ class Word2Vec:
         print("Loading model...")
         start_time_model = time.time()
 
+        import gensim
         self.model = gensim.models.KeyedVectors.load_word2vec_format(self.model_path, binary=True)
 
         end_time_model = time.time()
