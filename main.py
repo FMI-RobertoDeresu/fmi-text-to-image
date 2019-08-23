@@ -12,9 +12,11 @@ from tensorflow.python.client import device_lib
 from models.word2vec import Word2Vec
 from matplotlib import image as mpimg
 from tf_imports import K, losses
+import os
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-action", help="action to execute", default="test_loss")
+parser.add_argument("-action", help="action to execute", default="test_gpu_cpu")
 
 
 def main():
@@ -153,16 +155,43 @@ def word2vec_dict():
 
 
 def test_loss():
-    real = mpimg.imread(str(Path("tmp/real.png")))
-    utils.plot_utils.plot_image(real)
+    real = mpimg.imread(str(Path("tmp/r.png")))
+    # utils.plot_utils.plot_image(real)
 
-    generated = mpimg.imread(str(Path("tmp/generated.png")))
-    utils.plot_utils.plot_image(generated)
+    generated1 = mpimg.imread(str(Path("tmp/g1.png")))
+    # utils.plot_utils.plot_image(generated1)
+    
+    generated2 = mpimg.imread(str(Path("tmp/g2.png")))
+    # utils.plot_utils.plot_image(generated2)
 
-    loss1 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated)))
-    loss2 = K.eval(losses.mean_squared_error(K.flatten(generated), K.flatten(real)))
+    loss1 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated1)))
+    loss2 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated2)))
 
-    print((loss1, loss2))
+    print((loss1,loss2))
+
+
+def test_gpu_cpu():
+    input1 = tf.placeholder(tf.complex64, shape=[None, None, None, None], name="input1")
+    input2 = tf.placeholder(tf.complex64, shape=[None, None, None, None], name="input2")
+    input3 = tf.placeholder(tf.complex64, shape=[None, None, None, None], name="input3")
+
+    input1 = tf.transpose(input1, perm=[0, 3, 1, 2], conjugate=False)
+    input2 = tf.transpose(input2, perm=[0, 3, 1, 2], conjugate=True)
+    input3 = tf.transpose(input3, perm=[0, 3, 1, 2])
+    input3 = tf.conj(input3)
+
+    tf.Print(input1, [tf.real(input1), tf.imag(input1)], "o1: ", name="output1")
+    tf.Print(input2, [tf.real(input2), tf.imag(input2)], "o2: ", name="output2")
+    tf.Print(input3, [tf.real(input3), tf.imag(input3)], "o3: ", name="output3")
+
+    np.random.seed(seed=0)
+    a = np.random.rand(1, 16, 32, 8) + 1j * np.random.rand(1, 16, 32, 8)
+
+    sess = tf.InteractiveSession()
+
+    sess.run(["output2:0"], {"input2:0": a})
+    sess.run(["output3:0"], {"input3:0": a})
+    sess.run(["output1:0"], {"input1:0": a})
 
 
 if __name__ == '__main__':
@@ -175,7 +204,8 @@ if __name__ == '__main__':
         "test_tpu_flops": test_tpu_flops,
         "get_available_gpus": get_available_gpus,
         "word2vec_dict": word2vec_dict,
-        "test_loss": test_loss
+        "test_loss": test_loss,
+        "test_gpu_cpu": test_gpu_cpu
     }
 
     actions_dict[args.action]()
