@@ -1,7 +1,8 @@
 from tf_imports import Model
 from tf_imports import Input, Flatten, Reshape, GaussianNoise
 from models.base_model import BaseModel
-from models.layers import conv, deconv, dense, dropout
+from models.layers import conv, deconv, dense, dropout, batchnorm
+from models import activations
 from pathlib import Path
 import const
 
@@ -11,38 +12,75 @@ class CAE(BaseModel):
         super().__init__(input_shape)
 
     def _create_model(self, input_shape):
-        # encoder
+        droprate = 0.20
 
+        # ================== encoder ==================
+        # inputs
         encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
         encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)  # (N, M, 1)
-        encoder = conv(16)(encoder)  # (N/2, M/2, 16)
-        encoder = conv(16)(encoder)  # (N/4, M/4, 32)
-        encoder = conv(32)(encoder)  # (N/8, M/8, 64)
-        encoder = conv(32)(encoder)  # (N/16 , M/16, 128)
-        encoder = conv(64)(encoder)  # (N/32 , M/32, 256)
-        encoder = conv(64)(encoder)  # (N/64 , M/64, 512)
-        encoder = conv(128)(encoder)  # (N/128 , M/128, 1024)
-        encoder = conv(128)(encoder)  # (N/256 , M/128, 1024)
-        encoder = conv(256)(encoder)  # (N/512 , M/128, 1024)
-        encoder = Flatten()(encoder)  # (N/512 * M/512 * 256)
-        encoder = dropout()(encoder)  # (N/32 * M/32 * 256)
-        encoder = dense(1024, "sigmoid")(encoder)  # (512)
+
+        # conv #1 => (N/2, M/2, 32)
+        encoder = conv(32, strides=2)(encoder)
+        encoder = batchnorm()(encoder)
+        encoder = dropout(droprate)(encoder)
+
+        # conv #2 => (N/4, M/4, 32)
+        encoder = conv(32, strides=2)(encoder)
+        encoder = batchnorm()(encoder)
+        encoder = dropout(droprate)(encoder)
+
+        # conv #3 => (N/8, M/8, 32)
+        encoder = conv(32, strides=2)(encoder)
+        encoder = batchnorm()(encoder)
+        encoder = dropout(droprate)(encoder)
+
+        # fully connected #1 => (2048)
+        encoder = Flatten()(encoder)
+        encoder = dense(512, activation=activations.lrelu)(encoder)
+        encoder = batchnorm()(encoder)
+        encoder = dropout(droprate)(encoder)
+
+        # fully connected #2 => (256)
+        encoder = dense(256, activation=activations.relu)(encoder)
+
+        # encoder model
         encoder_model = Model(inputs=encoder_inputs, outputs=encoder, name="encoder")
 
-        # decoder
+        # ================== decoder ==================
+        # inputs
         decoder_inputs = Input(shape=encoder_model.output_shape[1:], name="decoder_input")  # (N)
-        decoder = dense(4096)(decoder_inputs)  # (4096)
-        decoder = Reshape((4, 4, 256))(decoder)  # (4, 4, 256)
-        decoder = deconv(128)(decoder)  # (8, 8, 128)
-        decoder = deconv(128, strides=1)(decoder)  # (8, 8, 128)
-        decoder = deconv(64)(decoder)  # (16, 16, 64)
-        decoder = deconv(64, strides=1)(decoder)  # (16, 16, 64)
-        decoder = deconv(32)(decoder)  # (32, 32, 32)
-        decoder = deconv(32, strides=1)(decoder)  # (32, 32, 32)
-        decoder = deconv(3)(decoder)  # (64, 64, 3)
+
+        # fully connected #1 => (2, 2, 64)
+        decoder = dense(256)(decoder_inputs)
+        decoder = Reshape((2, 2, 64))(decoder)
+
+        # deconv #1 => (4, 4, 32)
+        decoder = deconv(32)(decoder)
+        decoder = batchnorm()(decoder)
+        decoder = dropout(droprate)(decoder)
+
+        # deconv #2 => (8, 8, 32)
+        decoder = deconv(32)(decoder)
+        decoder = batchnorm()(decoder)
+        decoder = dropout(droprate)(decoder)
+
+        # deconv #3 => (16, 16, 32)
+        decoder = deconv(32)(decoder)
+        decoder = batchnorm()(decoder)
+        decoder = dropout(droprate)(decoder)
+
+        # deconv #4 => (32, 32, 32)
+        decoder = deconv(32)(decoder)
+        decoder = batchnorm()(decoder)
+        decoder = dropout(droprate)(decoder)
+
+        # deconv #5 => (64, 64, 3)
+        decoder = deconv(3, activation=activations.relu)(decoder)
+
+        # decoder model
         decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 
-        # CAE model
+        # ================== CAE ==================
         cae_outputs = decoder_model(encoder_model(encoder_inputs))
         model = Model(inputs=encoder_inputs, outputs=cae_outputs, name='cae')
 
