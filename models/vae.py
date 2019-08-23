@@ -1,7 +1,7 @@
 import const
 from models.base_model import BaseModel
 from tf_imports import K, Model, Lambda
-from tf_imports import Input, Flatten, Dense, Reshape, GaussianNoise
+from tf_imports import Input, Dropout, Flatten, Dense, Reshape, GaussianNoise
 from tf_imports import Conv2D, Conv2DTranspose
 from pathlib import Path
 
@@ -16,45 +16,38 @@ class VAE(BaseModel):
         # VAE model = encoder + decoder
         # build encoder model
         encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
-
         encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)  # (N, M, 1)
-
         encoder = Conv2D(32, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/2 , M/2, 32)
         encoder = Conv2D(64, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/4 , M/4, 64)
         encoder = Conv2D(128, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/8 , M/8, 128)
         encoder = Conv2D(256, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/16 , M/16, 256)
         encoder = Conv2D(512, 3, activation='relu', strides=2, padding='same')(encoder)  # (N/32 , M/32, 512)
-
-        # generate latent vector Q(z|X)
         encoder = Flatten()(encoder)  # (N/32 * M/32 * 512)
+        encoder = Dropout(0.1)(encoder)  # (N/32 * M/32 * 512)
         encoder = Dense(16, activation='relu')(encoder)  # (16)
         z_mean = Dense(latent_dim, name='z_mean')(encoder)  # (2)
         z_std_dev = Dense(latent_dim, name='z_std_dev')(encoder)  # (2)
         z = Lambda(self.rep_trick, name='z')([z_mean, z_std_dev])  # (2)
-
-        encoder = Model(inputs=encoder_inputs, outputs=z, name='encoder')
+        encoder_model = Model(inputs=encoder_inputs, outputs=z, name='encoder')
 
         # decoder
         decoder_inputs = Input(shape=(latent_dim,), name='z_sampling')  # (2)
-
         decoder = Dense(4096, activation='elu')(decoder_inputs)  # (4096)
         decoder = Reshape((4, 4, 256))(decoder)  # (4, 4, 256)
         decoder = Conv2DTranspose(128, 3, strides=2, padding='same', activation='elu')(decoder)  # (8, 8, 128)
         decoder = Conv2DTranspose(64, 3, strides=2, padding='same', activation='elu')(decoder)  # (16, 16, 64)
         decoder = Conv2DTranspose(32, 3, strides=2, padding='same', activation='elu')(decoder)  # (32, 32, 32)
         decoder = Conv2DTranspose(3, 3, strides=2, padding='same', activation='sigmoid')(decoder)  # (64, 64, 3)
-
-        decoder = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
+        decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 
         # VAE model
-        vae_outputs = decoder(encoder(encoder_inputs))
+        vae_outputs = decoder_model(encoder_model(encoder_inputs))
         vae = Model(inputs=encoder_inputs, outputs=vae_outputs, name='vae')
-
-        self.model_encoder = encoder
-        self.model_decoder = decoder
 
         self.z_mean = z_mean
         self.z_std_dev = z_std_dev
+        self.encoder_model = encoder_model
+        self.decoder_model = decoder_model
 
         return vae
 
@@ -84,8 +77,8 @@ class VAE(BaseModel):
 
     def plot_model(self, save_to_dir):
         self._plot_model(self.model, str(Path(save_to_dir, "vae.png")))
-        self._plot_model(self.model_encoder, str(Path(save_to_dir, "vae_encoder.png")))
-        self._plot_model(self.model_decoder, str(Path(save_to_dir, "vae_decoder.png")))
+        self._plot_model(self.encoder_model, str(Path(save_to_dir, "vae_encoder.png")))
+        self._plot_model(self.decoder_model, str(Path(save_to_dir, "vae_decoder.png")))
 
     # reparameterization trick
     @staticmethod

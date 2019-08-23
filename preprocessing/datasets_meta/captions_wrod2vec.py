@@ -49,7 +49,7 @@ def main():
         "cub-200-2011",
         "flickr30k",
         "coco-train-2014"
-    ])[0:1]
+    ])[3:5]
 
     word2vec = Word2Vec.get_instance()
     word2vec.load_model()

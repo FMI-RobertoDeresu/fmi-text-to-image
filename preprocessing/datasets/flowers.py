@@ -2,10 +2,10 @@ import utils
 from PIL import Image
 from pathlib import Path
 
-resize = False
+resize = True
 resize_img_size = (64, 64)
 flowers_raw_dataset_path = Path("../../tmp/datasets/flowers")
-flowers_processed_dataset_path = Path("../../datasets/flowers")
+flowers_processed_dataset_path = Path("../../datasets/oxford-102-flowers")
 
 labels_file_path = Path(flowers_raw_dataset_path, "labels.txt")
 with open(labels_file_path, 'r') as f:

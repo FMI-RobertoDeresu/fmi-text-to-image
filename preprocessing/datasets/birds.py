@@ -3,8 +3,9 @@ from PIL import Image
 from pathlib import Path
 
 resize = True
+resize_img_size = (64, 64)
 raw_dataset_path = Path("../../tmp/datasets/birds")
-processed_dataset_path = Path("../../datasets/cub-200-2011-128x128")
+processed_dataset_path = Path("../../datasets/cub-200-2011")
 
 images_dirs_path = Path(raw_dataset_path, "images")
 captions_dirs_path = Path(raw_dataset_path, "captions")
@@ -24,7 +25,7 @@ for dir_path in list(images_dirs_path.glob(pattern="*")):
 
         img = Image.open(str(image_path))
         if resize:
-            img = img.resize((128, 128), Image.ANTIALIAS)
+            img = img.resize(resize_img_size, Image.ANTIALIAS)
 
         new_file_path = Path(processed_dataset_path, "images", dir_name, image_name)
         new_file_path.parent.mkdir(parents=True, exist_ok=True)
