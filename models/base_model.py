@@ -1,8 +1,8 @@
 import utils
 from pathlib import Path
-from tf_imports import EarlyStopping, LearningRateScheduler
+from tf_imports import K, tf_summary
+from tf_imports import EarlyStopping
 from abc import ABC, abstractmethod
-from tf_imports import tf, K, multi_gpu_model, tf_summary
 from callbacks import OutputCheckpoint, TensorBoard2, CheckNanLoss
 from keras.utils import plot_model
 
@@ -27,7 +27,8 @@ class BaseModel(ABC):
     def plot_model(self, save_to_dir):
         pass
 
-    def _plot_model(self, model, file_path):
+    @staticmethod
+    def _plot_model(model, file_path):
         plot_model(model, to_file=file_path, show_shapes=True, show_layer_names=True)
         print(model.summary())
 
@@ -41,16 +42,12 @@ class BaseModel(ABC):
     def _compile(self, optimizer, loss):
         pass
 
-    def train(self, x, y, batch_size, out_folder, lr_schedule=None, output_checkpoint_inputs_word2vec=None):
+    def train(self, x, y, batch_size, out_folder, output_checkpoint_inputs_word2vec=None):
         if not self.model_compiled:
             raise Exception("The model must be compiled first.")
 
         train_uid = utils.uid()
-        description = "{train_uid} opt={optimizer} loss={loss} batch={batch_size}".format(
-            train_uid=train_uid,
-            optimizer=self.optimizer.__class__.__name__,
-            loss=self.loss.__name__,
-            batch_size=batch_size)
+        description = "{train_uid} batch={batch_size}".format(train_uid=train_uid, batch_size=batch_size)
         print("Training: {}".format(description))
 
         # callbacks
@@ -58,7 +55,7 @@ class BaseModel(ABC):
 
         early_stopping = EarlyStopping(
             monitor='val_loss',
-            min_delta=0.02,
+            min_delta=0.01,
             patience=30,
             verbose=1,
             mode='min',
@@ -67,10 +64,6 @@ class BaseModel(ABC):
 
         check_nan = CheckNanLoss('val_loss')
         callbacks.append(check_nan)
-
-        if lr_schedule is not None:
-            learning_rate_scheduler = LearningRateScheduler(lr_schedule)
-            callbacks.append(learning_rate_scheduler)
 
         tensor_board_log_dir = Path(out_folder, "tensorboard", description)
         tensor_board_log_dir.mkdir(parents=True, exist_ok=True)
@@ -81,7 +74,7 @@ class BaseModel(ABC):
                 tensor_board_writer=tensor_board_writer,
                 val_data=(x[:4], y[:4]),
                 test_data_input_word2vec=output_checkpoint_inputs_word2vec,
-                print_every=50)
+                print_every=30)
             callbacks.append(output_checkpoint)
 
         # last because close the writer on training end

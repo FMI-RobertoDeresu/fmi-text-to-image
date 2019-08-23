@@ -9,5 +9,5 @@ class CheckNanLoss(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         current = logs.get(self.monitor)
-        if math.isnan(current) or math.isinf(current):
+        if current is None or math.isnan(current) or math.isinf(current):
             self.model.stop_training = True

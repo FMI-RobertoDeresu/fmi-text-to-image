@@ -1,4 +1,6 @@
-from tf_imports import tf, K, Callback
+import os
+import utils
+from tf_imports import tf, K, Callback, losses
 
 
 class OutputCheckpoint(Callback):
@@ -16,6 +18,8 @@ class OutputCheckpoint(Callback):
         self.epoch = epoch
         if epoch % self.print_every == 0:
             self.log_test_results()
+        if 'DEV_ENV' in os.environ:
+            self.log_loss_values()
 
     def on_train_end(self, logs=None):
         self.train_end = True
@@ -44,3 +48,22 @@ class OutputCheckpoint(Callback):
         summary = K.eval(tf.summary.image(name=name, tensor=outputs, max_outputs=4))
         self.writer.add_summary(summary, global_step=self.epoch)
         self.writer.flush()
+
+    def log_loss_values(self):
+        x, y = self.val_data
+        outputs = self.model.predict(x=x[:4], batch_size=128)
+
+        loss_values = []
+        min_values = []
+        max_values = []
+        for real, generated in zip(y, outputs):
+            loss_values.append(K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated))))
+            min_values.append(K.eval(K.min(K.flatten(generated))))
+            max_values.append(K.eval(K.max(K.flatten(generated))))
+
+        utils.plot_utils.plot_image(outputs[0])
+
+        print()
+        print(loss_values)
+        print(min_values)
+        print(max_values)

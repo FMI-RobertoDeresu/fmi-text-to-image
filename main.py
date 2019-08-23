@@ -12,11 +12,13 @@ from tensorflow.python.client import device_lib
 from models.word2vec import Word2Vec
 from matplotlib import image as mpimg
 from tf_imports import K, losses
-import os
-#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+from models import CAE
+import const
 
 parser = argparse.ArgumentParser()
+# parser.add_argument("-action", help="action to execute", default="test_gpu_cpu_3")
 parser.add_argument("-action", help="action to execute", default="test_gpu_cpu")
+# parser.add_argument("-action", help="action to execute", default="test_loss")
 
 
 def main():
@@ -160,14 +162,14 @@ def test_loss():
 
     generated1 = mpimg.imread(str(Path("tmp/g1.png")))
     # utils.plot_utils.plot_image(generated1)
-    
+
     generated2 = mpimg.imread(str(Path("tmp/g2.png")))
     # utils.plot_utils.plot_image(generated2)
 
     loss1 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated1)))
     loss2 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated2)))
 
-    print((loss1,loss2))
+    print((loss1, loss2))
 
 
 def test_gpu_cpu():
@@ -194,6 +196,60 @@ def test_gpu_cpu():
     sess.run(["output1:0"], {"input1:0": a})
 
 
+def test_gpu_cpu_2():
+    np.random.seed(1234)
+    conv_ = np.random.randn(10, 7, 7, 56)
+    weight_ = np.random.randn(9, 9, 1, 56)
+
+    with tf.device("/cpu:0"):
+        bottom = tf.constant(conv_, dtype=tf.float32)
+        weight = tf.constant(weight_, dtype=tf.float32, name="weight_cpu")
+        bias = tf.get_variable("bias_cpu", initializer=np.zeros(1, dtype=np.float32))
+
+        conv = tf.nn.conv2d_transpose(bottom, weight, [10, 19, 19, 1], [1, 3, 3, 1], padding='SAME')
+        conv_cpu = tf.nn.bias_add(conv, bias)
+
+    with tf.device('/gpu:0'):
+        bottom = tf.constant(conv_, dtype=tf.float32)
+        weight = tf.constant(weight_, dtype=tf.float32, name="weight_gpu")
+        bias = tf.get_variable("bias_gpu", initializer=np.zeros(1, dtype=np.float32))
+
+        conv = tf.nn.conv2d_transpose(bottom, weight, [10, 19, 19, 1], [1, 3, 3, 1], padding='SAME')
+        conv_gpu = tf.nn.bias_add(conv, bias)
+
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    cpu_a = sess.run(conv_cpu)
+    gpu_a = sess.run(conv_gpu)
+    gpu_b = sess.run(conv_gpu)
+
+    def rel_error(a, ref):
+        return np.max(np.abs((ref - a) / ref))
+
+    print('relerror gpu_a vs cpu %f relerror gpu_b vs cpu 2 %f' % (rel_error(gpu_a, cpu_a), rel_error(gpu_b, cpu_a)))
+    print('relerror gpu_a vs. gpu_b %f ' % (rel_error(gpu_a, gpu_b)))
+
+    print(np.array_equal(sess.run(conv_cpu), sess.run(conv_cpu)))
+    print(np.array_equal(sess.run(conv_gpu), sess.run(conv_gpu)))
+
+
+def test_gpu_cpu_3():
+    input = np.random.normal(0, 0.1, size=[1, 30, 300, 1])
+
+    with tf.device("/cpu:0"):
+        np.random.seed(1234)
+        model_cpu = CAE(const.INPUT_SHAPE)
+
+    with tf.device('/gpu:0'):
+        np.random.seed(1234)
+        model_gpu = CAE(const.INPUT_SHAPE)
+
+    results_cpu = model_cpu.predict([input])
+    results_gpu = model_gpu.predict([input])
+
+    print(np.array_equal(results_cpu, results_gpu))
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -205,7 +261,9 @@ if __name__ == '__main__':
         "get_available_gpus": get_available_gpus,
         "word2vec_dict": word2vec_dict,
         "test_loss": test_loss,
-        "test_gpu_cpu": test_gpu_cpu
+        "test_gpu_cpu": test_gpu_cpu,
+        "test_gpu_cpu_2": test_gpu_cpu_2,
+        "test_gpu_cpu_3": test_gpu_cpu_3
     }
 
     actions_dict[args.action]()

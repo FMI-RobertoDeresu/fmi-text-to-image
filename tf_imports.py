@@ -9,17 +9,14 @@ if version.parse(tf.__version__) > version.parse("1.10.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.layers import Dropout, Flatten, Dense, Reshape, Lambda, GaussianNoise
     # noinspection PyUnresolvedReferences
-    # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.models import Model
     # noinspection PyUnresolvedReferences
     from tensorflow.contrib.keras.api.keras.callbacks import Callback, TensorBoard, EarlyStopping, LearningRateScheduler
     # noinspection PyUnresolvedReferences
-    from tensorflow.python.keras.utils import multi_gpu_model
-    # noinspection PyUnresolvedReferences
     from tensorflow.python.summary import summary as tf_summary
     # noinspection PyUnresolvedReferences
     from tensorflow.python.ops import array_ops
-else:
+elif version.parse(tf.__version__) > version.parse("1.8.0"):
     # noinspection PyUnresolvedReferences
     from tensorflow.keras import backend as K, optimizers, losses
     # noinspection PyUnresolvedReferences
@@ -30,8 +27,6 @@ else:
     from tensorflow.keras.models import Model
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.callbacks import Callback, TensorBoard, LearningRateScheduler
-    # noinspection PyUnresolvedReferences
-    from tensorflow.python.keras.utils import multi_gpu_model
     # noinspection PyUnresolvedReferences
     from keras.callbacks import EarlyStopping
     # noinspection PyUnresolvedReferences
