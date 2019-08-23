@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from tensorflow.python.client import device_lib
 from models.word2vec import Word2Vec
+from matplotlib import image as mpimg
+from tf_imports import K, losses
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-action", help="action to execute", default="word2vec_dict")
+parser.add_argument("-action", help="action to execute", default="test_loss")
 
 
 def main():
@@ -150,6 +152,19 @@ def word2vec_dict():
             print(key1, " --- ", value1)
 
 
+def test_loss():
+    real = mpimg.imread(str(Path("tmp/real.png")))
+    utils.plot_utils.plot_image(real)
+
+    generated = mpimg.imread(str(Path("tmp/generated.png")))
+    utils.plot_utils.plot_image(generated)
+
+    loss1 = K.eval(losses.mean_squared_error(K.flatten(real), K.flatten(generated)))
+    loss2 = K.eval(losses.mean_squared_error(K.flatten(generated), K.flatten(real)))
+
+    print((loss1, loss2))
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -159,7 +174,8 @@ if __name__ == '__main__':
         "using_gpu": using_gpu,
         "test_tpu_flops": test_tpu_flops,
         "get_available_gpus": get_available_gpus,
-        "word2vec_dict": word2vec_dict
+        "word2vec_dict": word2vec_dict,
+        "test_loss": test_loss
     }
 
     actions_dict[args.action]()
