@@ -1,5 +1,4 @@
-from tf_imports import Model
-from tf_imports import Input, Flatten, Reshape, GaussianNoise
+from tf_imports import tf, Model, Input, Flatten, Reshape, GaussianNoise
 from models.base_model import BaseModel
 from models.layers import conv, deconv, dense, dropout, batchnorm
 from models import activations
@@ -15,77 +14,79 @@ class CAE(BaseModel):
         droprate = 0.20
 
         # ================== encoder ==================
-        # inputs
-        encoder_inputs = Input(shape=input_shape, name='encoder_input')  # (N, M, 1)
-        encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_inputs)  # (N, M, 1)
+        with tf.name_scope('encoder_input'):  # (N, M, 1)
+            encoder_input = Input(shape=input_shape, name="encoder_input")
 
-        # conv #1 => (N/2, M/2, 32)
-        encoder = conv(32, strides=2)(encoder)
-        encoder = batchnorm()(encoder)
-        encoder = dropout(droprate)(encoder)
+        with tf.name_scope('encoder_input_noise'):  # (N, M, 1)
+            encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_input)
 
-        # conv #2 => (N/4, M/4, 32)
-        encoder = conv(32, strides=2)(encoder)
-        encoder = batchnorm()(encoder)
-        encoder = dropout(droprate)(encoder)
+        with tf.name_scope('encoder_conv_1'):  # (N/2, M/2, 32)
+            encoder = conv(32, strides=2)(encoder)
+            encoder = batchnorm()(encoder)
+            encoder = dropout(droprate)(encoder)
 
-        # conv #3 => (N/8, M/8, 32)
-        encoder = conv(32, strides=2)(encoder)
-        encoder = batchnorm()(encoder)
-        encoder = dropout(droprate)(encoder)
+        with tf.name_scope('encoder_conv_2'):  # (N/4, M/4, 32)
+            encoder = conv(32, strides=2)(encoder)
+            encoder = batchnorm()(encoder)
+            encoder = dropout(droprate)(encoder)
 
-        # fully connected #1 => (2048)
-        encoder = Flatten()(encoder)
-        encoder = dense(512, activation=activations.lrelu)(encoder)
-        encoder = batchnorm()(encoder)
-        encoder = dropout(droprate)(encoder)
+        with tf.name_scope('encoder_conv_3'):  # (N/8, M/8, 32)
+            encoder = conv(32, strides=2)(encoder)
+            encoder = batchnorm()(encoder)
+            encoder = dropout(droprate)(encoder)
 
-        # fully connected #2 => (256)
-        encoder = dense(256, activation=activations.relu)(encoder)
+        with tf.name_scope('encoder_fully_connected_1'):  # (2048)
+            encoder = Flatten()(encoder)
+            encoder = dense(512, activation=activations.lrelu)(encoder)
+            encoder = batchnorm()(encoder)
+            encoder = dropout(droprate)(encoder)
 
-        # encoder model
-        encoder_model = Model(inputs=encoder_inputs, outputs=encoder, name="encoder")
+        with tf.name_scope('encoder_fully_connected_2'):  # (256)
+            encoder = dense(256, activation=activations.relu)(encoder)
+
+        # encoder_model = Model(inputs=encoder_input, outputs=encoder, name="encoder")
 
         # ================== decoder ==================
-        # inputs
-        decoder_inputs = Input(shape=encoder_model.output_shape[1:], name="decoder_input")  # (N)
+        with tf.name_scope('decoder_input'):  # (N)
+            # decoder_inputs = Input(shape=encoder_model.output_shape[1:], name="decoder_input")
+            decoder_inputs = encoder
 
-        # fully connected #1 => (2, 2, 64)
-        decoder = dense(256)(decoder_inputs)
-        decoder = Reshape((2, 2, 64))(decoder)
+        with tf.name_scope('decoder_fully_connected_1'):  # (256)
+            decoder = dense(256)(decoder_inputs)
 
-        # deconv #1 => (4, 4, 32)
-        decoder = deconv(32)(decoder)
-        decoder = batchnorm()(decoder)
-        decoder = dropout(droprate)(decoder)
+        with tf.name_scope('decoder_reshape_1'):  # (2048)
+            decoder = Reshape((2, 2, 64))(decoder)
 
-        # deconv #2 => (8, 8, 32)
-        decoder = deconv(32)(decoder)
-        decoder = batchnorm()(decoder)
-        decoder = dropout(droprate)(decoder)
+        with tf.name_scope('decoder_deconv_1'):  # (4, 4, 32)
+            decoder = deconv(32)(decoder)
+            decoder = batchnorm()(decoder)
+            # decoder = dropout(droprate)(decoder)
 
-        # deconv #3 => (16, 16, 32)
-        decoder = deconv(32)(decoder)
-        decoder = batchnorm()(decoder)
-        decoder = dropout(droprate)(decoder)
+        with tf.name_scope('decoder_deconv_2'):  # (8, 8, 32)
+            decoder = deconv(32)(decoder)
+            decoder = batchnorm()(decoder)
+            # decoder = dropout(droprate)(decoder)
 
-        # deconv #4 => (32, 32, 32)
-        decoder = deconv(32)(decoder)
-        decoder = batchnorm()(decoder)
-        decoder = dropout(droprate)(decoder)
+        with tf.name_scope('decoder_deconv_3'):  # (16, 16, 32)
+            decoder = deconv(32)(decoder)
+            decoder = batchnorm()(decoder)
+            # decoder = dropout(droprate)(decoder)
 
-        # deconv #5 => (64, 64, 3)
-        decoder = deconv(3, activation=activations.relu)(decoder)
+        with tf.name_scope('decoder_deconv_4'):  # (32, 32, 32)
+            decoder = deconv(32)(decoder)
+            decoder = batchnorm()(decoder)
+            # decoder = dropout(droprate)(decoder)
 
-        # decoder model
-        decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
+        with tf.name_scope('decoder_deconv_5'):  # (64, 64, 3)
+            decoder = deconv(3, activation=activations.relu)(decoder)
+
+        # decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 
         # ================== CAE ==================
-        cae_outputs = decoder_model(encoder_model(encoder_inputs))
-        model = Model(inputs=encoder_inputs, outputs=cae_outputs, name='cae')
+        model = Model(inputs=encoder_input, outputs=decoder, name='cae')
 
-        self.encoder_model = encoder_model
-        self.decoder_model = decoder_model
+        # self.encoder_model = encoder_model
+        # self.decoder_model = decoder_model
 
         return model
 

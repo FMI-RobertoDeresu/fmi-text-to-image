@@ -8,7 +8,7 @@ parser.add_argument("-model", help="model name", default="cae")
 # parser.add_argument("-model", help="model name", default="vae")
 parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 # parser.add_argument("-dataset", help="dataset name", default="mnist30k")
-parser.add_argument("-trainings", help="number of trainings", default="3")
+parser.add_argument("-trainings", help="number of trainings", default="5")
 
 
 def main():

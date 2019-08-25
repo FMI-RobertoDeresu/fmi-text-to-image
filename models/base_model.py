@@ -1,4 +1,6 @@
 import utils
+import sklearn
+import numpy as np
 from pathlib import Path
 from tf_imports import K, tf_summary
 from tf_imports import EarlyStopping
@@ -78,19 +80,22 @@ class BaseModel(ABC):
             callbacks.append(output_checkpoint)
 
         # last because close the writer on training end
-        tensor_board = TensorBoard2(writer=tensor_board_writer)
+        tensor_board = TensorBoard2(writer=tensor_board_writer, batch_size=batch_size)
         callbacks.append(tensor_board)
+
+        x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, y, train_size=0.8, shuffle=True)
 
         # fit
         self.model.fit(
-            x=x,
-            y=y,
-            batch_size=batch_size,
+            x=x_train,
+            y=y_train,
             epochs=300,
+            batch_size=batch_size,
             verbose=1,
             shuffle=True,
             callbacks=callbacks,
-            validation_split=0.2)
+            validation_data=(x_test, y_test),
+        )
 
         # save
         weights_path = Path(out_folder, "weights", "{}.h5".format(description))

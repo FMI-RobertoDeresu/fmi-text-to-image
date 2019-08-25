@@ -1,5 +1,6 @@
 import os
 import utils
+import const
 from tf_imports import tf, K, Callback, losses
 
 
@@ -18,7 +19,7 @@ class OutputCheckpoint(Callback):
         self.epoch = epoch
         if epoch % self.print_every == 0:
             self.log_test_results()
-        if 'DEV_ENV' in os.environ:
+        if 'DEV_ENV' in os.environ and const.PLOT_IMAGES:
             self.log_loss_values()
 
     def on_train_end(self, logs=None):

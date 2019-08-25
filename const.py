@@ -1,5 +1,7 @@
 from pathlib import Path
 
+PLOT_IMAGES = False
+
 DATASETS_PATH = {
     "mnist1k": str(Path("./datasets/mnist1k-3x")),
     "mnist10k": str(Path("./datasets/mnist10k-3x")),
