@@ -17,9 +17,10 @@ def main():
     optimizer_indexes = range(1)
     loss_indexes = range(1)
     batch_size_indexes = range(1)
+    cfg_indexes = range(16)
 
-    for optimizer, loss, batch_size in \
-            itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes):
+    for optimizer, loss, batch_size, cfg_index in \
+            itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes, cfg_indexes):
         for _ in range(int(args.trainings)):
             try:
                 subproc_args = [
@@ -28,7 +29,8 @@ def main():
                     "-dataset", args.dataset,
                     "-optimizer-index", str(optimizer),
                     "-loss-index", str(loss),
-                    "-batch-size-index", str(batch_size)
+                    "-batch-size-index", str(batch_size),
+                    "-cfg-index", str(cfg_index)
                 ]
 
                 retcode = subprocess.call(subproc_args)

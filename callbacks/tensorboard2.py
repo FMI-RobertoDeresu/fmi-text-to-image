@@ -27,6 +27,7 @@ class TensorBoard2(TensorBoard):
         super().on_train_begin(logs)
 
     def on_epoch_end(self, epoch, logs=None):
+        logs["train_val_loss_report"] = logs["loss"] / logs["val_loss"]
         logs = self._rename_logs(logs)
         super().on_epoch_end(epoch, logs)
 
@@ -40,8 +41,9 @@ class TensorBoard2(TensorBoard):
         self.writer.add_summary(summary, global_step=0)
         self.writer.flush()
 
-    def _rename_logs(self, logs):
-        for key in logs:
-            logs["performance/" + key] = logs[key]
+    @staticmethod
+    def _rename_logs(logs):
+        for key, value in list(logs.items()):
+            logs["performance/" + key] = value
             del logs[key]
         return logs

@@ -18,6 +18,7 @@ parser.add_argument("-dataset", help="dataset name", default="mnist1k")
 parser.add_argument("-optimizer-index", help="optimizer index", type=int, default=0)
 parser.add_argument("-loss-index", help="loss index", type=int, default=0)
 parser.add_argument("-batch-size-index", help="batch size index", type=int, default=0)
+parser.add_argument("-cfg-index", help="cfg index", type=int, default=0)
 
 
 def main():
@@ -31,7 +32,7 @@ def main():
     ])
 
     batch_size_options = ([
-        64,  # 0
+        64,  # 1
     ])
 
     args = parser.parse_args()
@@ -72,7 +73,7 @@ def main():
     x, y = tuple(zip(*data[:]))
     x, y = (np.expand_dims(x, 4), np.array(y))
 
-    model = models.models_dict[args.model](const.INPUT_SHAPE)
+    model = models.models_dict[args.model](const.INPUT_SHAPE, args.cfg_index)
     optimizer = optimizer_options[args.optimizer_index]
     loss = loss_options[args.loss_index]
     batch_size = batch_size_options[args.batch_size_index]
