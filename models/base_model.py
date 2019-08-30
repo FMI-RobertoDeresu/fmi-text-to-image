@@ -49,7 +49,8 @@ class BaseModel(ABC):
             raise Exception("The model must be compiled first.")
 
         train_uid = utils.uid()
-        description = "{train_uid} batch={batch_size}".format(train_uid=train_uid, batch_size=batch_size)
+        description = "{train_uid} batch={batch_size} cfg_index={cfg_idx}"\
+            .format(train_uid=train_uid, batch_size=batch_size, cfg_idx=self.cfg_idx)
         print("Training: {}".format(description))
 
         # callbacks
