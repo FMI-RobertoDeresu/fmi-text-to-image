@@ -6,15 +6,14 @@ from pathlib import Path
 import const
 
 configs = [
-    [[64, 64, 64, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 0
-    [[64, 64, 64, 512, 256], [4 * 64, 128, 128, 128, 128]],  # 1
-    [[64, 64, 64, 512, 256], [4 * 64, 128, 128, 64, 32]],  # 2
-    [[64, 64, 64, 512, 256], [4 * 64, 256, 256, 256, 256]],  # 3
+    [[64, 64, 64, 0, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 0
+    [[64, 64, 64, 0, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 1
 
-    [[64, 64, 64, 2048, 1024], [4 * 64, 64, 64, 64, 64]],  # 4
-    [[64, 64, 64, 2048, 1024], [4 * 64, 128, 128, 128, 128]],  # 5
-    [[64, 64, 64, 2048, 1024], [4 * 64, 128, 128, 64, 32]],  # 6
-    [[64, 64, 64, 2048, 1024], [4 * 64, 256, 256, 256, 256]],  # 7
+    [[64, 64, 64, 0, 64, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 2
+    [[64, 64, 64, 0, 64, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 3
+
+    [[64, 64, 64, 64, 64, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 4
+    [[64, 64, 64, 64, 64, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 5
 ]
 
 
@@ -49,14 +48,27 @@ class CAE(BaseModel):
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
+        if enc_cfg[3] > 0:
+            with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
+                encoder = conv(enc_cfg[3], strides=2)(encoder)
+                encoder = batchnorm()(encoder)
+                encoder = dropout(droprate)(encoder)
+
+        if enc_cfg[4] > 0:
+            with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
+                encoder = conv(enc_cfg[4], strides=2)(encoder)
+                encoder = batchnorm()(encoder)
+                encoder = dropout(droprate)(encoder)
+
         with tf.name_scope('encoder_fully_connected_1'):  # (512)
             encoder = Flatten()(encoder)
-            encoder = dense(enc_cfg[3], activation=activations.lrelu)(encoder)
+            encoder = dense(enc_cfg[5], activation=activations.lrelu)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
-        with tf.name_scope('encoder_fully_connected_2'):  # (256)
-            encoder = dense(enc_cfg[4], activation=activations.relu)(encoder)
+        if enc_cfg[6] > 0:
+            with tf.name_scope('encoder_fully_connected_2'):  # (256)
+                encoder = dense(enc_cfg[6], activation=activations.relu)(encoder)
 
         # encoder_model = Model(inputs=encoder_input, outputs=encoder, name="encoder")
 

@@ -17,7 +17,7 @@ def main():
     optimizer_indexes = range(1)
     loss_indexes = range(1)
     batch_size_indexes = range(1)
-    cfg_indexes = range(16)
+    cfg_indexes = range(6)
 
     for optimizer, loss, batch_size, cfg_index in \
             itertools.product(optimizer_indexes, loss_indexes, batch_size_indexes, cfg_indexes):
