@@ -37,34 +37,34 @@ class CAE(BaseModel):
             encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_input)
 
         with tf.name_scope('encoder_conv_1'):  # (N/2, M/2, 32)
-            encoder = conv(enc_cfg[0], strides=2)(encoder)
             encoder = conv(enc_cfg[0], strides=1)(encoder)
+            encoder = conv(enc_cfg[0], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         with tf.name_scope('encoder_conv_2'):  # (N/4, M/4, 32)
-            encoder = conv(enc_cfg[1], strides=2)(encoder)
             encoder = conv(enc_cfg[1], strides=1)(encoder)
+            encoder = conv(enc_cfg[1], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         with tf.name_scope('encoder_conv_3'):  # (N/8, M/8, 32)
-            encoder = conv(enc_cfg[2], strides=2)(encoder)
             encoder = conv(enc_cfg[2], strides=1)(encoder)
+            encoder = conv(enc_cfg[2], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         if enc_cfg[3] > 0:
             with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
-                encoder = conv(enc_cfg[3], strides=2)(encoder)
                 encoder = conv(enc_cfg[3], strides=1)(encoder)
+                encoder = conv(enc_cfg[3], strides=2)(encoder)
                 encoder = batchnorm()(encoder)
                 encoder = dropout(droprate)(encoder)
 
         if enc_cfg[4] > 0:
             with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
-                encoder = conv(enc_cfg[4], strides=2)(encoder)
                 encoder = conv(enc_cfg[4], strides=1)(encoder)
+                encoder = conv(enc_cfg[4], strides=2)(encoder)
                 encoder = batchnorm()(encoder)
                 encoder = dropout(droprate)(encoder)
 
@@ -92,27 +92,27 @@ class CAE(BaseModel):
             decoder = Reshape((2, 2, dec_cfg[0] // 4))(decoder)
 
         with tf.name_scope('decoder_deconv_1'):  # (4, 4, 32)
-            decoder = deconv(dec_cfg[1])(decoder)
+            decoder = deconv(dec_cfg[1], strides=2)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_2'):  # (8, 8, 32)
-            decoder = deconv(dec_cfg[2])(decoder)
+            decoder = deconv(dec_cfg[2], strides=2)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_3'):  # (16, 16, 32)
-            decoder = deconv(dec_cfg[3])(decoder)
+            decoder = deconv(dec_cfg[3], strides=2)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_4'):  # (32, 32, 32)
-            decoder = deconv(dec_cfg[4])(decoder)
+            decoder = deconv(dec_cfg[4], strides=2)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_5'):  # (64, 64, 3)
-            decoder = deconv(3, activation=activations.relu)(decoder)
+            decoder = deconv(3, strides=2, activation=activations.relu)(decoder)
 
         # decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
 

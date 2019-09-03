@@ -15,7 +15,7 @@ def conv(filters, kernel_size=3, strides=1, padding="same", activation=lrelu, ke
         kernel_initializer=kernel_initializer)
 
 
-def deconv(filters, kernel_size=5, strides=2, padding="same", activation=lrelu, kernel_initializer=kernel_init):
+def deconv(filters, kernel_size=5, strides=1, padding="same", activation=lrelu, kernel_initializer=kernel_init):
     return Conv2DTranspose(
         filters=filters,
         kernel_size=kernel_size,
