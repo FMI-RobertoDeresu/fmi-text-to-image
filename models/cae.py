@@ -6,14 +6,14 @@ from pathlib import Path
 import const
 
 configs = [
-    [[64, 64, 64, 0, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 0,
-    [[64, 64, 64, 0, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 1,
-
-    [[64, 64, 64, 64, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 2,
-    [[64, 64, 64, 64, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 3,
-
-    [[128, 64, 32, 32, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 4,
-    [[128, 64, 32, 32, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 5,
+    # [[64, 64, 64, 0, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 0,
+    # [[64, 64, 64, 0, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 1,
+    #
+    # [[64, 64, 64, 64, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 2,
+    # [[64, 64, 64, 64, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 3,
+    #
+    # [[128, 64, 32, 32, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 4,
+    # [[128, 64, 32, 32, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 5,
 
     [[64, 64, 64, 64, 64, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 6,
     [[64, 64, 64, 64, 64, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 7,
@@ -37,33 +37,28 @@ class CAE(BaseModel):
             encoder = GaussianNoise(stddev=const.NOISE_STDDEV)(encoder_input)
 
         with tf.name_scope('encoder_conv_1'):  # (N/2, M/2, 32)
-            encoder = conv(enc_cfg[0], strides=1)(encoder)
             encoder = conv(enc_cfg[0], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         with tf.name_scope('encoder_conv_2'):  # (N/4, M/4, 32)
-            encoder = conv(enc_cfg[1], strides=1)(encoder)
             encoder = conv(enc_cfg[1], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         with tf.name_scope('encoder_conv_3'):  # (N/8, M/8, 32)
-            encoder = conv(enc_cfg[2], strides=1)(encoder)
             encoder = conv(enc_cfg[2], strides=2)(encoder)
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
         if enc_cfg[3] > 0:
             with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
-                encoder = conv(enc_cfg[3], strides=1)(encoder)
                 encoder = conv(enc_cfg[3], strides=2)(encoder)
                 encoder = batchnorm()(encoder)
                 encoder = dropout(droprate)(encoder)
 
         if enc_cfg[4] > 0:
             with tf.name_scope('encoder_conv_4'):  # (N/10, M/10, 32)
-                encoder = conv(enc_cfg[4], strides=1)(encoder)
                 encoder = conv(enc_cfg[4], strides=2)(encoder)
                 encoder = batchnorm()(encoder)
                 encoder = dropout(droprate)(encoder)
@@ -93,21 +88,25 @@ class CAE(BaseModel):
 
         with tf.name_scope('decoder_deconv_1'):  # (4, 4, 32)
             decoder = deconv(dec_cfg[1], strides=2)(decoder)
+            decoder = deconv(dec_cfg[1], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_2'):  # (8, 8, 32)
             decoder = deconv(dec_cfg[2], strides=2)(decoder)
+            decoder = deconv(dec_cfg[2], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_3'):  # (16, 16, 32)
             decoder = deconv(dec_cfg[3], strides=2)(decoder)
+            decoder = deconv(dec_cfg[3], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_4'):  # (32, 32, 32)
             decoder = deconv(dec_cfg[4], strides=2)(decoder)
+            decoder = deconv(dec_cfg[4], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
