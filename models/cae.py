@@ -6,16 +6,6 @@ from pathlib import Path
 import const
 
 configs = [
-    # [[64, 64, 64, 0, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 0,
-    # [[64, 64, 64, 0, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 1,
-    #
-    # [[64, 64, 64, 64, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 2,
-    # [[64, 64, 64, 64, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 3,
-    #
-    # [[128, 64, 32, 32, 0, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 4,
-    # [[128, 64, 32, 32, 0, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 5,
-
-    [[64, 64, 64, 64, 64, 512, 0], [4 * 64, 64, 64, 64, 64]],  # 6,
     [[64, 64, 64, 64, 64, 512, 256], [4 * 64, 64, 64, 64, 64]],  # 7,
 ]
 
@@ -69,57 +59,52 @@ class CAE(BaseModel):
             encoder = batchnorm()(encoder)
             encoder = dropout(droprate)(encoder)
 
-        if enc_cfg[6] > 0:
-            with tf.name_scope('encoder_fully_connected_2'):  # (256)
-                encoder = dense(enc_cfg[6], activation=activations.relu)(encoder)
+        with tf.name_scope('encoder_fully_connected_2'):  # (256)
+            encoder = dense(enc_cfg[6], activation=activations.relu)(encoder)
 
-        # encoder_model = Model(inputs=encoder_input, outputs=encoder, name="encoder")
+        encoder_model = Model(inputs=encoder_input, outputs=encoder, name="encoder")
 
         # ================== decoder ==================
         with tf.name_scope('decoder_input'):  # (N)
-            # decoder_inputs = Input(shape=encoder_model.output_shape[1:], name="decoder_input")
-            decoder_inputs = encoder
+            decoder_input = Input(shape=encoder_model.output_shape[1:], name="decoder_input")
+            # decoder_input = encoder
 
         with tf.name_scope('decoder_fully_connected_1'):  # (256)
-            decoder = dense(dec_cfg[0])(decoder_inputs)
+            decoder = dense(dec_cfg[0])(decoder_input)
 
         with tf.name_scope('decoder_reshape_1'):  # (2, 2, 64)
             decoder = Reshape((2, 2, dec_cfg[0] // 4))(decoder)
 
         with tf.name_scope('decoder_deconv_1'):  # (4, 4, 32)
             decoder = deconv(dec_cfg[1], strides=2)(decoder)
-            decoder = deconv(dec_cfg[1], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_2'):  # (8, 8, 32)
             decoder = deconv(dec_cfg[2], strides=2)(decoder)
-            decoder = deconv(dec_cfg[2], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_3'):  # (16, 16, 32)
             decoder = deconv(dec_cfg[3], strides=2)(decoder)
-            decoder = deconv(dec_cfg[3], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_4'):  # (32, 32, 32)
             decoder = deconv(dec_cfg[4], strides=2)(decoder)
-            decoder = deconv(dec_cfg[4], strides=1)(decoder)
             decoder = batchnorm()(decoder)
             decoder = dropout(droprate)(decoder)
 
         with tf.name_scope('decoder_deconv_5'):  # (64, 64, 3)
             decoder = deconv(3, strides=2, activation=activations.relu)(decoder)
 
-        # decoder_model = Model(inputs=decoder_inputs, outputs=decoder, name='decoder')
+        decoder_model = Model(inputs=decoder_input, outputs=decoder, name='decoder')
 
         # ================== CAE ==================
-        model = Model(inputs=encoder_input, outputs=decoder, name='cae')
+        model = Model(inputs=encoder_input, outputs=decoder_model(encoder_model(encoder_input)), name='cae')
 
-        # self.encoder_model = encoder_model
-        # self.decoder_model = decoder_model
+        self.encoder_model = encoder_model
+        self.decoder_model = decoder_model
 
         return model
 
